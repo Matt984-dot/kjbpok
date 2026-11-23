@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Jour 16 - Wordle Français</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: var(--bordeaux-scuro, #3d020f);
+            color: #f5ebd6;
+            font-family: inherit;
+        }
+
+        .wordle-container {
+            display: none;
+            position: relative;
+            max-width: 420px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            background: linear-gradient(180deg, #242b17 0%, #191e10 100%);
+            padding: 14px 12px 18px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .wordle-container.active {
+            display: block;
+        }
+
+        /* Wrapper che tiene insieme immagine di sfondo e griglia sovrapposta */
+        .wordle-stage {
+            --grid-top: 22.1%;
+            --grid-left: 14.5%;
+            --grid-width: 73.2%;
+            --grid-height: 73.4%;
+
+            position: relative;
+            width: 100%;
+            margin: 0 auto 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid rgba(212, 175, 55, 0.75);
+        }
+
+        .wordle-bg-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            user-select: none;
+        }
+
+        .wordle-board-overlay {
+            position: absolute;
+            top: var(--grid-top);
+            left: var(--grid-left);
+            width: var(--grid-width);
+            height: var(--grid-height);
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            gap: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .wordle-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0;
+        }
+
+        .wordle-tile {
+            background: transparent;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1rem, 4.5vw, 1.45rem);
+            font-weight: 800;
+            color: #1f2d3d;
+            text-transform: uppercase;
+            user-select: none;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.12s ease;
+        }
+
+        .wordle-tile.filled {
+            background: rgba(255, 252, 232, 0.72);
+        }
+
+        .wordle-tile.correct {
+            background: rgba(47, 111, 62, 0.92);
+            color: #ffffff;
+        }
+
+        .wordle-tile.present {
+            background: rgba(212, 155, 18, 0.92);
+            color: #ffffff;
+        }
+
+        .wordle-tile.absent {
+            background: rgba(61, 2, 15, 0.78);
+            color: rgba(245, 235, 214, 0.7);
+        }
+
+        .wordle-actions {
+            margin-bottom: 10px;
+        }
+
+        .hint-btn {
+            background: transparent;
+            color: #f7e6b5;
+            border: 1.5px solid rgba(212, 175, 55, 0.75);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .feedback-box {
+            display: none;
+            background: rgba(18, 22, 11, 0.9);
+            border: 1.5px solid rgba(212, 175, 55, 0.7);
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 0.86rem;
+            line-height: 1.4;
+            color: #f5ebd6;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .feedback-box.visible {
+            display: block;
+        }
+
+        .wordle-keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .kb-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .kb-key {
+            flex: 1;
+            max-width: 34px;
+            height: 40px;
+            background: #3d020f;
+            color: #f5ebd6;
+            border: 1.5px solid rgba(212, 175, 55, 0.7);
+            border-radius: 7px;
+            font-size: 0.92rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .kb-key.wide {
+            max-width: 54px;
+            font-size: 0.78rem;
+            background: #520516;
+        }
+
+        .kb-key.correct {
+            background: #2f6f3e;
+            border-color: #e5b324;
+            color: #fff8e7;
+        }
+
+        .kb-key.present {
+            background: #b8860b;
+            border-color: #f7e6b5;
+            color: #fff8e7;
+        }
+
+        .kb-key.absent {
+            background: #1d0107;
+            border-color: rgba(212, 175, 55, 0.2);
+            color: rgba(245, 235, 214, 0.35);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 16</div>
+        <img src="Pacco_chiuso16.png" alt="Pacco Giorno 16" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. WORDLE FRANCESE CON SFONDO WORDLE_FR.PNG -->
+    <div class="wordle-container" id="wordleGame">
+        <div class="wordle-stage">
+            <img src="wordle_fr.png" alt="Wordle Français - Jour 16" class="wordle-bg-img">
+            <div class="wordle-board-overlay" id="wordleBoard"></div>
+        </div>
+
+        <div class="wordle-actions">
+            <button type="button" class="hint-btn" id="hintBtn" onclick="mostraIndizio()">💡 Indice</button>
+        </div>
+
+        <div class="feedback-box" id="feedbackBox"></div>
+
+        <div class="wordle-keyboard" id="wordleKeyboard"></div>
+    </div>
+
+    <script>
+        const PAROLA_SEGRETA = "NEIGE";
+        const MAX_TENTATIVI = 6;
+        const LUNGHEZZA = 5;
+
+        const TASTIERA_RIGHE = [
+            ["A", "Z", "E", "R", "T", "Y", "U", "I", "O", "P"],
+            ["Q", "S", "D", "F", "G", "H", "J", "K", "L", "M"],
+            ["ENTER", "W", "X", "C", "V", "B", "N", "DEL"]
+        ];
+
+        let rigaCorrente = 0;
+        let letteraCorrente = 0;
+        let griglia = Array.from({ length: MAX_TENTATIVI }, () => Array(LUNGHEZZA).fill(""));
+        let partitaTerminata = false;
+        const statoLettere = {};
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('wordleGame').classList.add('active');
+            costruisciGriglia();
+            costruisciTastiera();
+        }
+
+        function normalizzaLettera(ch) {
+            return ch
+                .toUpperCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function costruisciGriglia() {
+            const board = document.getElementById("wordleBoard");
+            board.innerHTML = "";
+            for (let r = 0; r < MAX_TENTATIVI; r++) {
+                const row = document.createElement("div");
+                row.className = "wordle-row";
+                for (let c = 0; c < LUNGHEZZA; c++) {
+                    const tile = document.createElement("div");
+                    tile.className = "wordle-tile";
+                    tile.id = `tile-${r}-${c}`;
+                    row.appendChild(tile);
+                }
+                board.appendChild(row);
+            }
+        }
+
+        function costruisciTastiera() {
+            const kb = document.getElementById("wordleKeyboard");
+            kb.innerHTML = "";
+            TASTIERA_RIGHE.forEach(righetta => {
+                const rowDiv = document.createElement("div");
+                rowDiv.className = "kb-row";
+                righetta.forEach(tasto => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "kb-key";
+                    btn.dataset.key = tasto;
+                    if (tasto === "ENTER") {
+                        btn.textContent = "OK";
+                        btn.classList.add("wide");
+                        btn.onclick = inviaTentativo;
+                    } else if (tasto === "DEL") {
+                        btn.textContent = "⌫";
+                        btn.classList.add("wide");
+                        btn.onclick = cancellaLettera;
+                    } else {
+                        btn.textContent = tasto;
+                        btn.onclick = () => aggiungiLettera(tasto);
+                    }
+                    rowDiv.appendChild(btn);
+                });
+                kb.appendChild(rowDiv);
+            });
+        }
+
+        function mostraFeedback(html) {
+            const fb = document.getElementById("feedbackBox");
+            fb.classList.add("visible");
+            fb.innerHTML = html;
+        }
+
+        function mostraIndizio() {
+            if (partitaTerminata) return;
+            mostraFeedback("💡 <strong>Indice :</strong> C'est quelque chose qui tombe du ciel en hiver et qui rend le paysage tout blanc (commence par <strong>N</strong>).");
+        }
+
+        function aggiungiLettera(lettera) {
+            if (partitaTerminata || letteraCorrente >= LUNGHEZZA) return;
+            griglia[rigaCorrente][letteraCorrente] = lettera;
+            const tile = document.getElementById(`tile-${rigaCorrente}-${letteraCorrente}`);
+            tile.textContent = lettera;
+            tile.classList.add("filled");
+            letteraCorrente++;
+        }
+
+        function cancellaLettera() {
+            if (partitaTerminata || letteraCorrente <= 0) return;
+            letteraCorrente--;
+            griglia[rigaCorrente][letteraCorrente] = "";
+            const tile = document.getElementById(`tile-${rigaCorrente}-${letteraCorrente}`);
+            tile.textContent = "";
+            tile.classList.remove("filled");
+        }
+
+        function aggiornaPrioritaTasto(lettera, nuovoStato) {
+            const priorita = { absent: 1, present: 2, correct: 3 };
+            const attuale = statoLettere[lettera];
+            if (!attuale || priorita[nuovoStato] > priorita[attuale]) {
+                statoLettere[lettera] = nuovoStato;
+            }
+            const btn = document.querySelector(`.kb-key[data-key="${lettera}"]`);
+            if (btn) {
+                btn.classList.remove("correct", "present", "absent");
+                btn.classList.add(statoLettere[lettera]);
+            }
+        }
+
+        function inviaTentativo() {
+            if (partitaTerminata) return;
+
+            if (letteraCorrente < LUNGHEZZA) {
+                mostraFeedback("⚠️ Entre <strong>5 lettres</strong> avant de valider !");
+                return;
+            }
+
+            const tentativo = griglia[rigaCorrente].join("");
+            const segretaArr = PAROLA_SEGRETA.split("");
+            const tentativoArr = tentativo.split("");
+            const valutazione = Array(LUNGHEZZA).fill("absent");
+            const conteggioDisponibili = {};
+
+            for (let i = 0; i < LUNGHEZZA; i++) {
+                if (tentativoArr[i] === segretaArr[i]) {
+                    valutazione[i] = "correct";
+                    segretaArr[i] = null;
+                }
+            }
+
+            for (let i = 0; i < LUNGHEZZA; i++) {
+                const ch = segretaArr[i];
+                if (ch) {
+                    conteggioDisponibili[ch] = (conteggioDisponibili[ch] || 0) + 1;
+                }
+            }
+
+            for (let i = 0; i < LUNGHEZZA; i++) {
+                if (valutazione[i] !== "correct") {
+                    const ch = tentativoArr[i];
+                    if (conteggioDisponibili[ch] > 0) {
+                        valutazione[i] = "present";
+                        conteggioDisponibili[ch]--;
+                    }
+                }
+            }
+
+            for (let i = 0; i < LUNGHEZZA; i++) {
+                const tile = document.getElementById(`tile-${rigaCorrente}-${i}`);
+                tile.classList.remove("filled");
+                tile.classList.add(valutazione[i]);
+                aggiornaPrioritaTasto(tentativoArr[i], valutazione[i]);
+            }
+
+            if (tentativo === PAROLA_SEGRETA) {
+                partitaTerminata = true;
+                document.getElementById("hintBtn").style.display = "none";
+                mostraFeedback(`✨ <strong>Bravo ! Le mot était bien ${PAROLA_SEGRETA}.</strong>`);
+                return;
+            }
+
+            rigaCorrente++;
+            letteraCorrente = 0;
+
+            if (rigaCorrente >= MAX_TENTATIVI) {
+                partitaTerminata = true;
+                document.getElementById("hintBtn").style.display = "none";
+                mostraFeedback(`❄️ <strong>Dommage ! Le mot mystère était ${PAROLA_SEGRETA}.</strong>`);
+            }
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (!document.getElementById("wordleGame").classList.contains("active") || partitaTerminata) return;
+            if (e.key === "Enter") {
+                e.preventDefault();
+                inviaTentativo();
+            } else if (e.key === "Backspace") {
+                e.preventDefault();
+                cancellaLettera();
+            } else if (/^[a-zA-ZÀ-ÿ]$/.test(e.key)) {
+                const norm = normalizzaLettera(e.key);
+                if (/^[A-Z]$/.test(norm)) {
+                    aggiungiLettera(norm);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 13 - Tris Natalizio</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: var(--bordeaux-scuro, #3d020f);
+            color: #f5ebd6;
+        }
+
+        .ttt-game-container {
+            display: none;
+            position: relative;
+            max-width: 420px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            background-color: #4f030c;
+            padding: 0;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .ttt-game-container.active {
+            display: block;
+        }
+
+        .ttt-bg-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .ttt-overlay {
+            position: absolute;
+            top: 17%;
+            left: 0;
+            right: 0;
+            padding: 0 18px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ttt-status {
+            width: 100%;
+            max-width: 300px;
+            background: rgba(32, 2, 7, 0.78);
+            border: 1.5px solid rgba(212, 175, 55, 0.85);
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #f7e6b5;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .ttt-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 9px;
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto 12px;
+        }
+
+        .ttt-cell {
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            background: rgba(245, 235, 214, 0.12);
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 12px;
+            padding: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.12s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .ttt-cell:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .ttt-cell:disabled {
+            cursor: default;
+        }
+
+        .ttt-cell.win-cell {
+            background: rgba(229, 179, 36, 0.35);
+            box-shadow: 0 0 14px rgba(229, 179, 36, 0.7);
+        }
+
+        .ttt-symbol-img {
+            width: 82%;
+            height: 82%;
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+            pointer-events: none;
+        }
+
+        .ttt-restart-btn {
+            background: #e5b324;
+            color: #3d020f;
+            border: none;
+            border-bottom: 3px solid #9e7b16;
+            border-radius: 22px;
+            padding: 8px 20px;
+            font-size: 0.88rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .ttt-restart-btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 13</div>
+        <img src="Pacco_chiuso13.png" alt="Pacco Giorno 13" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. GIOCO TRIS CONTRO AI -->
+    <div class="ttt-game-container" id="tttGame">
+        <img src="sfondo_tris.png" alt="Tris Natalizio" class="ttt-bg-img">
+
+        <div class="ttt-overlay">
+            <div class="ttt-status" id="tttStatus">
+                Tocca a te! Scegli una casella.
+            </div>
+
+            <div class="ttt-grid" id="tttGrid"></div>
+
+            <button type="button" class="ttt-restart-btn" onclick="nuovaPartita()">↺ Nuova partita</button>
+        </div>
+    </div>
+
+    <script>
+        const SIMBOLO_GIOCATORE = {
+            src: "tris1.png",
+            alt: "Ghirlanda natalizia"
+        };
+
+        const SIMBOLO_CPU = {
+            src: "tris2.png",
+            alt: "Stella cometa"
+        };
+
+        const COMBINAZIONI_VINCENTI = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // righe
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // colonne
+            [0, 4, 8], [2, 4, 6]             // diagonali
+        ];
+
+        let griglia = Array(9).fill(null); // null | 'U' (utente) | 'C' (cpu)
+        let turnoUtente = true;
+        let partitaFinita = false;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('tttGame').classList.add('active');
+            nuovaPartita();
+        }
+
+        function nuovaPartita() {
+            griglia = Array(9).fill(null);
+            turnoUtente = true;
+            partitaFinita = false;
+            document.getElementById('tttStatus').innerText = "Tocca a te! Scegli una casella.";
+            renderGriglia();
+        }
+
+        function renderGriglia() {
+            const gridEl = document.getElementById('tttGrid');
+            gridEl.innerHTML = '';
+
+            griglia.forEach((valore, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'ttt-cell';
+                btn.id = `cell-${idx}`;
+                btn.disabled = Boolean(valore) || !turnoUtente || partitaFinita;
+                btn.onclick = () => mossaUtente(idx);
+
+                if (valore === 'U') {
+                    btn.innerHTML = `<img src="${SIMBOLO_GIOCATORE.src}" alt="${SIMBOLO_GIOCATORE.alt}" class="ttt-symbol-img">`;
+                } else if (valore === 'C') {
+                    btn.innerHTML = `<img src="${SIMBOLO_CPU.src}" alt="${SIMBOLO_CPU.alt}" class="ttt-symbol-img">`;
+                }
+
+                gridEl.appendChild(btn);
+            });
+        }
+
+        function mossaUtente(idx) {
+            if (!turnoUtente || partitaFinita || griglia[idx] !== null) return;
+
+            griglia[idx] = 'U';
+            turnoUtente = false;
+            renderGriglia();
+
+            const esito = controllaEsito();
+            if (esito) {
+                concludiPartita(esito);
+                return;
+            }
+
+            document.getElementById('tttStatus').innerText = "Sta pensando...";
+            setTimeout(mossaCpu, 420);
+        }
+
+        function mossaCpu() {
+            if (partitaFinita) return;
+
+            const mossa = scegliMossaCpu();
+            if (mossa !== null) {
+                griglia[mossa] = 'C';
+            }
+
+            renderGriglia();
+
+            const esito = controllaEsito();
+            if (esito) {
+                concludiPartita(esito);
+                return;
+            }
+
+            turnoUtente = true;
+            renderGriglia();
+            document.getElementById('tttStatus').innerText = "Tocca a te!";
+        }
+
+        function scegliMossaCpu() {
+            const libere = griglia
+                .map((v, i) => (v === null ? i : null))
+                .filter(i => i !== null);
+
+            if (libere.length === 0) return null;
+
+            // Piccola probabilità di mossa casuale così il giocatore può vincere
+            if (Math.random() < 0.22) {
+                return libere[Math.floor(Math.random() * libere.length)];
+            }
+
+            // 1. Cerca se la CPU può vincere subito
+            const mossaVincente = trovaMossaSingola('C');
+            if (mossaVincente !== null) return mossaVincente;
+
+            // 2. Blocca l'utente se ha due in linea
+            const mossaBlocco = trovaMossaSingola('U');
+            if (mossaBlocco !== null) return mossaBlocco;
+
+            // 3. Prendi il centro se libero
+            if (griglia[4] === null) return 4;
+
+            // 4. Prendi un angolo libero
+            const angoliLiberi = [0, 2, 6, 8].filter(i => griglia[i] === null);
+            if (angoliLiberi.length > 0) {
+                return angoliLiberi[Math.floor(Math.random() * angoliLiberi.length)];
+            }
+
+            // 5. Qualsiasi casella libera
+            return libere[Math.floor(Math.random() * libere.length)];
+        }
+
+        function trovaMossaSingola(giocatore) {
+            for (const [a, b, c] of COMBINAZIONI_VINCENTI) {
+                const linea = [griglia[a], griglia[b], griglia[c]];
+                const conteggio = linea.filter(x => x === giocatore).length;
+                const vuoti = linea.filter(x => x === null).length;
+
+                if (conteggio === 2 && vuoti === 1) {
+                    if (griglia[a] === null) return a;
+                    if (griglia[b] === null) return b;
+                    if (griglia[c] === null) return c;
+                }
+            }
+            return null;
+        }
+
+        function controllaEsito() {
+            for (const combo of COMBINAZIONI_VINCENTI) {
+                const [a, b, c] = combo;
+                if (griglia[a] && griglia[a] === griglia[b] && griglia[a] === griglia[c]) {
+                    return { vincitore: griglia[a], combo };
+                }
+            }
+
+            if (griglia.every(cell => cell !== null)) {
+                return { vincitore: 'P', combo: [] };
+            }
+
+            return null;
+        }
+
+        function concludiPartita(esito) {
+            partitaFinita = true;
+            turnoUtente = false;
+
+            esito.combo.forEach(idx => {
+                const cella = document.getElementById(`cell-${idx}`);
+                if (cella) cella.classList.add('win-cell');
+            });
+
+            const statusEl = document.getElementById('tttStatus');
+            if (esito.vincitore === 'U') {
+                statusEl.innerText = "✨ Bravissimo! Hai vinto il Tris di oggi!";
+            } else if (esito.vincitore === 'C') {
+                statusEl.innerText = "🎄 Ha vinto la stella cometa! Riprova.";
+            } else {
+                statusEl.innerText = "🤝 Pareggio! Una sfida tiratissima.";
+            }
+
+            document.querySelectorAll('.ttt-cell').forEach(btn => {
+                btn.disabled = true;
+            });
+        }
+    </script>
+</body>
+</html>

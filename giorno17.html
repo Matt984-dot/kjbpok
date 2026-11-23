@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 17 - Indovinello</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: var(--bordeaux-scuro, #3d020f);
+            color: #f5ebd6;
+            font-family: inherit;
+        }
+
+        .riddle-container {
+            display: none;
+            position: relative;
+            max-width: 420px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            background: linear-gradient(180deg, #242b17 0%, #191e10 100%);
+            padding: 20px 16px 22px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .riddle-container.active {
+            display: block;
+        }
+
+        .riddle-badge {
+            display: inline-block;
+            background: rgba(61, 2, 15, 0.88);
+            border: 1px solid rgba(212, 175, 55, 0.8);
+            color: #f7e6b5;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+        }
+
+        .riddle-title {
+            margin: 0 0 12px;
+            font-size: 1.25rem;
+            color: #e5b324;
+        }
+
+        .riddle-card {
+            background: rgba(61, 2, 15, 0.72);
+            border: 1.5px solid rgba(212, 175, 55, 0.65);
+            border-radius: 12px;
+            padding: 16px 14px;
+            margin-bottom: 14px;
+            font-size: 1.02rem;
+            line-height: 1.55;
+            color: #fbf3e2;
+        }
+
+        .riddle-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .riddle-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(212, 175, 55, 0.75);
+            background: rgba(18, 22, 11, 0.92);
+            color: #fff8e7;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .riddle-input:focus {
+            border-color: #e5b324;
+            box-shadow: 0 0 0 2px rgba(229, 179, 36, 0.25);
+        }
+
+        .riddle-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-gold {
+            background: #e5b324;
+            color: #3d020f;
+            border: none;
+            border-radius: 20px;
+            padding: 9px 18px;
+            font-size: 0.88rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-outline {
+            background: #3d020f;
+            color: #f5ebd6;
+            border: 1.5px solid rgba(212, 175, 55, 0.8);
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .feedback-box {
+            display: none;
+            background: rgba(18, 22, 11, 0.92);
+            border: 1.5px solid rgba(212, 175, 55, 0.75);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #f5ebd6;
+            text-align: left;
+        }
+
+        .feedback-box.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 17</div>
+        <img src="Pacco_chiuso17.png" alt="Pacco Giorno 17" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. INDOVINELLO -->
+    <div class="riddle-container" id="riddleGame">
+        <div class="riddle-badge">Giorno 17 · Indovinello</div>
+        <h2 class="riddle-title">Pensa un attimo...</h2>
+
+        <div class="riddle-card">
+            Ti tiene in vita, ma lo vedi solo d'inverno. Cos'è?
+        </div>
+
+        <form class="riddle-form" onsubmit="verificaRisposta(event)">
+            <input
+                type="text"
+                id="answerInput"
+                class="riddle-input"
+                placeholder="Scrivi qui la tua risposta..."
+                autocomplete="off"
+            >
+            <div class="riddle-actions">
+                <button type="submit" class="btn-gold">Controlla</button>
+                <button type="button" class="btn-outline" id="hintBtn" onclick="mostraIndizio()">💡 Indizio</button>
+            </div>
+        </form>
+
+        <div class="feedback-box" id="feedbackBox"></div>
+    </div>
+
+    <script>
+        const RISPOSTE_VALIDE = ["fiato", "il fiato", "un fiato"];
+        let risolto = false;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('riddleGame').classList.add('active');
+        }
+
+        function normalizzaTesto(str) {
+            return str
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function mostraFeedback(html) {
+            const fb = document.getElementById("feedbackBox");
+            fb.classList.add("visible");
+            fb.innerHTML = html;
+        }
+
+        function mostraIndizio() {
+            if (risolto) return;
+            mostraFeedback("💡 <strong>Indizio :</strong> Lo espiri ogni secondo, ma quando fa freddo diventa una piccola nuvola bianca.");
+        }
+
+        function verificaRisposta(e) {
+            e.preventDefault();
+            if (risolto) return;
+
+            const input = document.getElementById("answerInput");
+            const pulita = normalizzaTesto(input.value);
+
+            if (!pulita) {
+                mostraFeedback("✍️ Scrivi prima una risposta nella casella qui sopra.");
+                return;
+            }
+
+            if (RISPOSTE_VALIDE.includes(pulita)) {
+                risolto = true;
+                input.disabled = true;
+                document.getElementById("hintBtn").style.display = "none";
+                mostraFeedback("✨ <strong>Esatto !</strong> La risposta è proprio <strong>il fiato</strong>.");
+            } else {
+                mostraFeedback("❄️ Non è quello... riprova oppure premi <strong>Indizio</strong> se ti serve una mano.");
+            }
+        }
+    </script>
+</body>
+</html>

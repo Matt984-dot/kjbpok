@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 14 - Una storia tra cucina e salotto</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: var(--bordeaux-scuro, #3d020f);
+            color: #f5ebd6;
+        }
+
+        .story-game-container {
+            display: none;
+            position: relative;
+            max-width: 420px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            background: linear-gradient(180deg, #242b17 0%, #191e10 100%);
+            padding: 20px 16px 22px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .story-game-container.active {
+            display: block;
+        }
+
+        .story-step-tag {
+            display: inline-block;
+            background: rgba(61, 2, 15, 0.85);
+            border: 1px solid rgba(212, 175, 55, 0.75);
+            color: #f7e6b5;
+            font-size: 0.78rem;
+            font-weight: bold;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+        }
+
+        .story-title {
+            margin: 0 0 10px;
+            font-size: 1.25rem;
+            color: #e5b324;
+        }
+
+        .story-text {
+            margin: 0 0 16px;
+            font-size: 0.96rem;
+            line-height: 1.5;
+            color: #f5ebd6;
+            text-align: left;
+            background: rgba(18, 22, 11, 0.72);
+            border: 1.5px solid rgba(212, 175, 55, 0.45);
+            border-radius: 12px;
+            padding: 13px 14px;
+        }
+
+        .story-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .story-choice-btn,
+        .story-external-link {
+            display: block;
+            width: 100%;
+            background: #3d020f;
+            color: #f5ebd6;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.12s ease, background-color 0.16s ease;
+            box-sizing: border-box;
+        }
+
+        .story-choice-btn:active,
+        .story-external-link:active {
+            transform: scale(0.98);
+        }
+
+        .story-choice-btn.gold-btn,
+        .story-external-link {
+            background: #e5b324;
+            color: #3d020f;
+            border-color: #f7e6b5;
+            text-align: center;
+        }
+
+        .story-footer-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .story-secondary-btn {
+            background: transparent;
+            color: #f7e6b5;
+            border: 1.5px solid rgba(212, 175, 55, 0.75);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.86rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 14</div>
+        <img src="Pacco_chiuso14.png" alt="Pacco Giorno 14" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. MINI-STORIA A BIVI -->
+    <div class="story-game-container" id="storyGame">
+        <div class="story-step-tag" id="storyTag">INIZIO</div>
+        <h2 class="story-title" id="storyTitle"></h2>
+        <div class="story-text" id="storyText"></div>
+        <div id="storyExtra"></div>
+        <div class="story-choices" id="storyChoices"></div>
+        <div class="story-footer-actions" id="storyFooter"></div>
+    </div>
+
+    <script>
+        // Sostituisci questi 4 link con quelli che preferisci
+        const LINK_RICETTA_1 = "https://www.fattoincasadabenedetta.it/ricetta/biscotti-candy-cane/";
+        const LINK_RICETTA_2 = "https://www.fattoincasadabenedetta.it/ricetta/biscotti-cinnamon-rolls/";
+        const LINK_ORIGAMI_1 = "https://www.diy-magazine.com/it/instructions/origami/origami-christmas-tree/#google_vignette";
+        const LINK_ORIGAMI_2 = "https://www.maestramarta.it/buon-natale-con-i-babbi-origami-classe-1a/";
+
+        const SCENARI = {
+            inizio: {
+                tag: "Bivio 1 di 2",
+                titolo: "Dove portano i tuoi passi?",
+                testo: "La casa è avvolta nella quiete delle feste. Da una parte arriva un profumo caldo di spezie e forno acceso, dall'altra filtra una luce morbida e dorata tra le tende. Da dove vuoi cominciare?",
+                scelte: [
+                    { testo: "🍳 Vai in cucina", prossima: "cucina_step2" },
+                    { testo: "🛋️ Vai in salotto", prossima: "salotto_step2" }
+                ]
+            },
+            cucina_step2: {
+                tag: "In cucina · Scelta 2 di 2",
+                titolo: "Tra barattoli e grembiuli",
+                testo: "Sul piano di legno ci sono una ciotola infarinata e un vecchio barattolo di latta. Vedi un cassetto socchiuso con dei fogli appunti e una mensola in alto con un taccuino rilegato in stoffa.",
+                scelte: [
+                    { testo: "📖 Apri il taccuino sulla mensola", prossima: "finale_ricetta_1" },
+                    { testo: "🗄️ Controlli il cassetto socchiuso", prossima: "finale_ricetta_2" }
+                ]
+            },
+            salotto_step2: {
+                tag: "In salotto · Scelta 2 di 2",
+                titolo: "La luce delle lucine",
+                testo: "In salotto l'aria è tranquilla e calda. Accanto alle lucine c'è una piccola scatola dorata appoggiata sul tavolino, mentre vicino alla poltrona riposa un biglietto piegato a metà.",
+                scelte: [
+                    { testo: "✨ Apri la scatola dorata", prossima: "finale_origami_1" },
+                    { testo: "💌 Leggi il biglietto sulla poltrona", prossima: "finale_origami_2" }
+                ]
+            },
+            finale_ricetta_1: {
+                tag: "Finale · Cucina (1/2)",
+                titolo: "🍪 Prima ricetta dal taccuino",
+                testo: "Hai aperto il taccuino sulla mensola! Apri il link qui sotto per leggere la prima ricetta dei biscotti.",
+                extraHtml: `
+                    <a href="${LINK_RICETTA_1}" target="_blank" rel="noopener noreferrer" class="story-external-link">
+                        🍪 Apri la ricetta 1 ↗
+                    </a>
+                `,
+                isFinale: true
+            },
+            finale_ricetta_2: {
+                tag: "Finale · Cucina (2/2)",
+                titolo: "🍪 Seconda ricetta dal cassetto",
+                testo: "Hai trovato l'appunto nascosto nel cassetto! Apri il link qui sotto per leggere la seconda ricetta dei biscotti.",
+                extraHtml: `
+                    <a href="${LINK_RICETTA_2}" target="_blank" rel="noopener noreferrer" class="story-external-link">
+                        🍪 Apri la ricetta 2 ↗
+                    </a>
+                `,
+                isFinale: true
+            },
+            finale_origami_1: {
+                tag: "Finale · Salotto (1/2)",
+                titolo: "⭐ Primo origami dalla scatola dorata",
+                testo: "Hai aperto la scatola dorata sul tavolino! Segui il tutorial al link qui sotto per realizzare il primo origami.",
+                extraHtml: `
+                    <a href="${LINK_ORIGAMI_1}" target="_blank" rel="noopener noreferrer" class="story-external-link">
+                        ⭐ Guarda il tutorial origami 1 ↗
+                    </a>
+                `,
+                isFinale: true
+            },
+            finale_origami_2: {
+                tag: "Finale · Salotto (2/2)",
+                titolo: "⭐ Secondo origami dal biglietto",
+                testo: "Hai aperto il biglietto sulla poltrona! Segui il tutorial al link qui sotto per realizzare il secondo origami.",
+                extraHtml: `
+                    <a href="${LINK_ORIGAMI_2}" target="_blank" rel="noopener noreferrer" class="story-external-link">
+                        ⭐ Guarda il tutorial origami 2 ↗
+                    </a>
+                `,
+                isFinale: true
+            }
+        };
+
+        let cronologia = [];
+        let scenaCorrente = "inizio";
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('storyGame').classList.add('active');
+            avviaStoria();
+        }
+
+        function avviaStoria() {
+            cronologia = [];
+            mostraScenario("inizio");
+        }
+
+        function vaiA(chiaveScenario) {
+            cronologia.push(scenaCorrente);
+            mostraScenario(chiaveScenario);
+        }
+
+        function tornaIndietro() {
+            if (cronologia.length === 0) return;
+            const precedente = cronologia.pop();
+            mostraScenario(precedente, true);
+        }
+
+        function mostraScenario(chiave, senzaSalvare = false) {
+            scenaCorrente = chiave;
+            const scena = SCENARI[chiave];
+            if (!scena) return;
+
+            document.getElementById('storyTag').innerText = scena.tag;
+            document.getElementById('storyTitle').innerText = scena.titolo;
+            document.getElementById('storyText').innerText = scena.testo;
+            document.getElementById('storyExtra').innerHTML = scena.extraHtml || '';
+
+            const choicesEl = document.getElementById('storyChoices');
+            choicesEl.innerHTML = '';
+
+            if (!scena.isFinale && scena.scelte) {
+                scena.scelte.forEach((scelta, idx) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `story-choice-btn ${idx === 0 ? 'gold-btn' : ''}`;
+                    btn.innerText = scelta.testo;
+                    btn.onclick = () => vaiA(scelta.prossima);
+                    choicesEl.appendChild(btn);
+                });
+            }
+
+            const footerEl = document.getElementById('storyFooter');
+            footerEl.innerHTML = '';
+
+            if (cronologia.length > 0 && !senzaSalvare) {
+                const backBtn = document.createElement('button');
+                backBtn.type = 'button';
+                backBtn.className = 'story-secondary-btn';
+                backBtn.innerText = "← Torna alla scelta precedente";
+                backBtn.onclick = tornaIndietro;
+                footerEl.appendChild(backBtn);
+            }
+
+            if (scena.isFinale) {
+                const restartBtn = document.createElement('button');
+                restartBtn.type = 'button';
+                restartBtn.className = 'story-choice-btn gold-btn';
+                restartBtn.innerText = "↺ Ricomincia e prova altri percorsi";
+                restartBtn.onclick = avviaStoria;
+                footerEl.appendChild(restartBtn);
+            }
+        }
+    </script>
+</body>
+</html>

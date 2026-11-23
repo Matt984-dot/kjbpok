@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 15 - Risolvi l'Equazione</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: var(--bordeaux-scuro, #3d020f);
+            color: #f5ebd6;
+        }
+
+        .enigma-game-container {
+            display: none;
+            position: relative;
+            max-width: 420px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            background: linear-gradient(180deg, #242b17 0%, #191e10 100%);
+            padding: 16px 14px 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .enigma-game-container.active {
+            display: block;
+        }
+
+        .enigma-board-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 0 14px;
+            padding: 0;
+            border: 2px solid rgba(212, 175, 55, 0.75);
+            border-radius: 12px;
+            box-sizing: border-box;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .option-btn {
+            background: #3d020f;
+            color: #f5ebd6;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 12px;
+            padding: 12px 10px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.12s ease, background-color 0.16s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        .option-btn.wrong {
+            background: rgba(120, 14, 28, 0.55);
+            border-color: rgba(212, 175, 55, 0.35);
+            color: rgba(245, 235, 214, 0.45);
+        }
+
+        .option-btn.correct {
+            background: #e5b324;
+            color: #3d020f;
+            border-color: #f7e6b5;
+        }
+
+        .hint-btn {
+            background: transparent;
+            color: #f7e6b5;
+            border: 1.5px solid rgba(212, 175, 55, 0.75);
+            border-radius: 20px;
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .feedback-box {
+            display: none;
+            background: rgba(18, 22, 11, 0.88);
+            border: 1.5px solid rgba(212, 175, 55, 0.7);
+            border-radius: 12px;
+            padding: 11px 13px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: #f5ebd6;
+            text-align: left;
+        }
+
+        .feedback-box.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 15</div>
+        <img src="Pacco_chiuso15.png" alt="Pacco Giorno 15" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. ENIGMA CON SFONDO LAVAGNA CANVA -->
+    <div class="enigma-game-container" id="enigmaGame">
+        <img src="equazione.png" alt="Risolvi l'equazione - Giorno 15" class="enigma-board-img">
+
+        <div class="options-grid" id="optionsGrid">
+            <button type="button" class="option-btn" onclick="verificaRisposta(53, this)">53</button>
+            <button type="button" class="option-btn" onclick="verificaRisposta(60, this)">60</button>
+            <button type="button" class="option-btn" onclick="verificaRisposta(67, this)">67</button>
+            <button type="button" class="option-btn" onclick="verificaRisposta(72, this)">72</button>
+        </div>
+
+        <button type="button" class="hint-btn" id="hintBtn" onclick="mostraIndizio()">💡 Indizio</button>
+
+        <div class="feedback-box" id="feedbackBox"></div>
+    </div>
+
+    <script>
+        const RISPOSTA_CORRETTA = 67;
+        let risolto = false;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('enigmaGame').classList.add('active');
+        }
+
+        function mostraIndizio() {
+            if (risolto) return;
+            const fb = document.getElementById('feedbackBox');
+            fb.classList.add('visible');
+            fb.innerHTML = "💡 <strong>Indizio:</strong> Cappello = 7, Albero = 5 e Pacco = 5. Nell'ultima riga svolgi prima la parentesi, poi la moltiplicazione e infine l'addizione.";
+        }
+
+        function verificaRisposta(valore, btnEl) {
+            if (risolto) return;
+            const fb = document.getElementById('feedbackBox');
+            fb.classList.add('visible');
+
+            if (valore === RISPOSTA_CORRETTA) {
+                risolto = true;
+                btnEl.classList.add('correct');
+                document.getElementById('hintBtn').style.display = 'none';
+
+                document.querySelectorAll('.option-btn').forEach(btn => {
+                    btn.disabled = true;
+                });
+
+                fb.innerHTML = "✨ <strong>Esatto! Il risultato è 67.</strong><br>(7 + 5) × 5 + 7 = 12 × 5 + 7 = 60 + 7 = <strong>67</strong>.";
+            } else {
+                btnEl.classList.add('wrong');
+                btnEl.disabled = true;
+                fb.innerHTML = "❌ Non è <strong>" + valore + "</strong>: ricontrolla l'ordine delle operazioni sull'ultima riga!";
+            }
+        }
+    </script>
+</body>
+</html>

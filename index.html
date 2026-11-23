@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Christmas Atmosphere Loading</title>
+    <style>
+        :root {
+            --bordeaux: #5e0005;
+            --forest-green: #1C3B2B;
+            --gold: #D4AF37;
+            --gold-light: #F3E5AB;
+            --cream: #FDFBF7;
+        }
+
+        body {
+            background-color: var(--bordeaux);
+            color: var(--cream);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--gold);
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        }
+
+        p.subtitle {
+            color: var(--gold-light);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        /* --- PANNELLO DI TEST / RESET --- */
+        .test-panel {
+            background: rgba(94, 0, 5, 0.9);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .btn-reset {
+            background-color: var(--gold);
+            color: var(--bordeaux);
+            border: none;
+            padding: 6px 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-reset:hover {
+            background-color: var(--gold-light);
+        }
+
+        /* --- COPERTINA E BARRA SLITTA --- */
+        .cover-container {
+            position: relative;
+            width: 100%;
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 25px;
+        }
+
+        .cover-img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            display: block;
+        }
+
+        .sleigh-overlay {
+            position: absolute;
+            top: 22%;
+            left: 7%;
+            width: 86%;
+            background: rgba(94, 0, 5, 0.92);
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid #D4AF37;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            box-sizing: border-box;
+        }
+
+        .sleigh-header {
+            display: flex;
+            justify-content: space-between;
+            color: #D4AF37;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-family: sans-serif;
+        }
+
+        .track-bg {
+            position: relative;
+            width: 100%;
+            height: 12px;
+            background-color: #3b0003;
+            border-radius: 6px;
+            border: 1px solid #D4AF37;
+        }
+
+        .track-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #B8860B, #FFD700);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .sleigh-icon {
+            position: absolute;
+            top: -20px;
+            left: 0%;
+            font-size: 26px;
+            transition: left 0.5s ease;
+            transform: scaleX(-1);
+        }
+
+        .tree-icon {
+            position: absolute;
+            top: -19px;
+            right: -6px;
+            font-size: 20px;
+        }
+
+        /* --- GRIGLIA DEI PACCHI --- */
+        .grid-section-title {
+            color: var(--gold);
+            font-size: 1.5rem;
+            margin-top: 30px;
+            margin-bottom: 5px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .gift-tile {
+            cursor: pointer;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+            background-color: var(--forest-green);
+        }
+
+        .gift-tile:hover {
+            transform: translateY(-4px);
+            border-color: var(--gold);
+            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .gift-tile img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 10px;
+        }
+
+        /* --- MODALE / POPUP --- */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* Stile di default (per il Memory e altri giorni) */
+        .modal-content {
+            background-color: var(--forest-green);
+            border: 4px solid var(--gold);
+            border-radius: 16px;
+            padding: 20px;
+            width: 95%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+        }
+
+        /* Stile personalizzato per il Giorno 4 (Geografia) senza sfondo verde pesante */
+        .modal-content.geo-theme {
+            background-color: #3b0003;
+            border: 4px solid var(--gold);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* --- STILI MEMORY SUL TAVOLO DA GIOCO --- */
+        .memory-table-container {
+            position: relative;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--gold);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+            margin-top: 5px;
+        }
+
+        .memory-table-bg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .memory-grid-overlay {
+            position: absolute;
+            top: 25%;
+            left: 0;
+            width: 100%;
+            height: 75%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 10px 15px 15px 15px;
+            box-sizing: border-box;
+            background: transparent;
+            align-content: center;
+        }
+
+        .memory-tile {
+            aspect-ratio: 1;
+            background-color: var(--bordeaux);
+            border: 2px solid var(--gold);
+            border-radius: 6px;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .memory-tile:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.5);
+        }
+
+        .memory-tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* --- STILI MINI-GIOCO GEOGRAFIA (GIORNO 4) --- */
+        .geo-map-container {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto 15px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--gold);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+        }
+
+        .geo-map-img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .regions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .btn-region {
+            background-color: var(--gold);
+            color: var(--bordeaux);
+            border: none;
+            padding: 8px 10px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .btn-region:hover {
+            background-color: var(--gold-light);
+        }
+
+        .btn-restart, .btn-back, .btn-quiz-opt {
+            background-color: var(--gold);
+            color: var(--bordeaux);
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-restart:hover, .btn-back:hover, .btn-quiz-opt:hover {
+            background-color: var(--gold-light);
+        }
+
+        .quiz-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-quiz-opt {
+            background-color: var(--forest-green);
+            color: var(--cream);
+            border: 2px solid var(--gold);
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn-quiz-opt:hover {
+            background-color: var(--gold);
+            color: var(--bordeaux);
+        }
+
+        /* --- SEZIONE SORPRESE SCARTATE SOTTO --- */
+        .surprises-section {
+            margin-top: 30px;
+            text-align: left;
+            background: rgba(28, 59, 43, 0.4);
+            border: 2px dashed var(--gold);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .surprises-title {
+            color: var(--gold);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .surprise-card {
+            background-color: rgba(20, 41, 30, 0.9);
+            border-left: 4px solid var(--gold);
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        #completion-banner {
+            display: none;
+            background: linear-gradient(135deg, #1C3B2B, #5e0005);
+            border: 3px solid var(--gold);
+            border-radius: 14px;
+            padding: 20px;
+            margin-top: 25px;
+            box-shadow: 0 6px 20px rgba(212,175,55,0.4);
+        }
+
+        #completion-banner h3 {
+            color: var(--gold);
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎄 Loading Christmas Atmosphere 🎄</h1>
+        <p class="subtitle">Benvenuta nel tuo personale calendario dell'avvento!</p>
+
+        <!-- Pannello di Test (Reset) -->
+        <div class="test-panel">
+            <span style="font-size: 0.9rem; color: var(--gold-light); margin-right: 10px;">🛠️ Pannello di Test:</span>
+            <button class="btn-reset" onclick="resetCalendar()">🔄 Resetta Calendario</button>
+        </div>
+
+        <!-- Copertina con Barra e Slitta -->
+        <div class="cover-container">
+            <img src="copertina.png" alt="Copertina Natale" class="cover-img" onerror="this.style.display='none'">
+            <div class="sleigh-overlay">
+                <div class="sleigh-header">
+                    <span id="progress-text">Magia del Natale: 0%</span>
+                    <span id="count-text">0 / 24 pacchi scartati</span>
+                </div>
+                <div class="track-bg">
+                    <div class="track-fill" id="bar-fill"></div>
+                    <div class="sleigh-icon" id="sleigh-marker">🛷</div>
+                    <div class="tree-icon">🎄</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Griglia dei 24 Pacchi -->
+        <h3 class="grid-section-title">🎁 I Pacchi dell'Avvento</h3>
+        <p style="font-size: 0.95rem; color: var(--gold-light); margin-bottom: 15px;">Clicca direttamente su un pacchetto per scartarlo!</p>
+        
+        <div class="calendar-grid" id="grid-container"></div>
+
+        <!-- Sezione Sorprese Scartate -->
+        <div class="surprises-section" id="surprises-container" style="display: none;">
+            <div class="surprises-title">🌟 Le tue Sorprese Scartate:</div>
+            <div id="surprises-list"></div>
+        </div>
+
+        <!-- Banner di Completamento -->
+        <div id="completion-banner">
+            <h3>🎉 Tanti auguri! 🎉</h3>
+            <p>Hai aperto tutti i pacchi e completato il calendario con successo!</p>
+        </div>
+    </div>
+
+    <!-- Modale / Popup per Sorprese e Mini-giochi -->
+    <div id="modal">
+        <div class="modal-content" id="modal-content-box">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const sorprese = {
+            1: "🎄 Giorno 1: Benvenuta nel tuo calendario! Una dolce coccola per iniziare.",
+            2: "❤️ Giorno 2: Memory di Natale sul tavolo da gioco!",
+            3: "✨ Giorno 3: Oggi concediti una pausa con la tua bevanda preferita.",
+            4: "🎁 Giorno 4: Mini-gioco di geografia: Indovina le province d'Italia!",
+            5: "⭐ Giorno 5: Un abbraccio virtuale forte forte per scaldare la giornata.",
+            6: "🎅 Giorno 6: Oggi è San Nicolò! Cerca una calza o un dolcetto speciale.",
+            7: "🕯️ Giorno 7: Accendi una candela profumata e goditi il relax.",
+            8: "🎶 Giorno 8: Metti la tua canzone natalizia preferita a palla!",
+            9: "🍪 Giorno 9: Concediti un biscotto in più senza sensi di colpa.",
+            10: "🌟 Giorno 10: Sei a metà della prima decade, splendi più che mai.",
+            11: "❤️ Giorno 11: Fai un complimento inaspettato a qualcuno oggi.",
+            12: "❄️ Giorno 12: Guarda fuori dalla finestra e respira profondamente.",
+            13: "🎁 Giorno 13: Stasera cinema sul divano con coperta e cioccolata.",
+            14: "✨ Giorno 14: Ricordati quanto vali e quanto sei speciale.",
+            15: "🎄 Giorno 15: Mancano solo 10 giorni a Natale!",
+            16: "💌 Giorno 16: Scrivi un pensiero gentile per te stessa su un foglietto.",
+            17: "☕ Giorno 17: Bevi una cioccolata calda con tanta panna montata.",
+            18: "🌟 Giorno 18: La magia del Natale è fatta di piccoli gesti quotidiani.",
+            19: "🎨 Giorno 19: Dedica un'ora a un tuo hobby che ami tanto.",
+            20: "❤️ Giorno 20: Chiama una persona cara che non senti da un po'.",
+            21: "🕯️ Giorno 21: Solstizio d'inverno: la luce comincia a tornare!",
+            22: "🎁 Giorno 22: Fai ordine nel tuo spazio per fare spazio alle novità.",
+            23: "✨ Giorno 23: Domani è la vigilia... l'attesa sta per finire!",
+            24: "🎄 Giorno 24: Buon Natale! Che questa giornata ti porti immensa gioia e amore!"
+        };
+
+        function getOpenedGifts() {
+            const saved = localStorage.getItem('pacchi_aperti');
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        function saveOpenedGifts(opened) {
+            localStorage.getItem('pacchi_aperti', JSON.stringify(opened));
+            localStorage.setItem('pacchi_aperti', JSON.stringify(opened));
+        }
+
+        function resetCalendar() {
+            localStorage.removeItem('pacchi_aperti');
+            renderCalendar();
+        }
+
+        let memoryBoard = [];
+        let memoryMatched = [];
+        let memoryFlipped = [];
+        let clearPending = false;
+
+        function startMemoryGame() {
+            let symbols = [];
+            for (let i = 1; i <= 10; i++) {
+                symbols.push(i, i);
+            }
+            memoryBoard = symbols.sort(() => Math.random() - 0.5);
+            memoryMatched = [];
+            memoryFlipped = [];
+            clearPending = false;
+            renderMemoryGrid();
+        }
+
+        function renderMemoryGrid() {
+            const modalBody = document.getElementById('modal-body');
+
+            let html = `
+                <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
+                    <button class="btn-restart" onclick="startMemoryGame()">🔄 Ricomincia</button>
+                </div>
+                <div class="memory-table-container">
+                    <img src="sfondo_memory.png" alt="Tavolo da gioco" class="memory-table-bg" onerror="this.style.display='none'">
+                    <div class="memory-grid-overlay">
+            `;
+
+            for (let idx = 0; idx < 20; idx++) {
+                const symbolId = memoryBoard[idx];
+                const isMatched = memoryMatched.includes(idx);
+                const isFlipped = memoryFlipped.includes(idx);
+
+                let imgSrc = "back_memory.png";
+                if (isMatched || isFlipped) {
+                    imgSrc = `front_memory${symbolId}.png`;
+                }
+
+                html += `
+                    <div class="memory-tile" onclick="clickTile(${idx})">
+                        <img src="${imgSrc}" alt="Tessera" onerror="this.src='back_memory.png'">
+                    </div>
+                `;
+            }
+            html += `</div></div>`;
+
+            if (memoryMatched.length === 20) {
+                html += `<p style="color: var(--gold); font-weight: bold; margin-top: 10px; font-size: 1.1rem;">🎉 Complimenti! Hai completato il Memory! 🎉</p>`;
+            }
+
+            modalBody.innerHTML = html;
+        }
+
+        function clickTile(idx) {
+            if (memoryMatched.includes(idx) || memoryFlipped.includes(idx)) return;
+
+            if (clearPending) {
+                memoryFlipped = [];
+                clearPending = false;
+            }
+
+            if (memoryFlipped.length >= 2) {
+                memoryFlipped = [];
+            }
+
+            memoryFlipped.push(idx);
+
+            if (memoryFlipped.length === 2) {
+                const [idx1, idx2] = memoryFlipped;
+                if (memoryBoard[idx1] === memoryBoard[idx2]) {
+                    memoryMatched.push(idx1, idx2);
+                    memoryFlipped = [];
+                } else {
+                    clearPending = true;
+                }
+            }
+            renderMemoryGrid();
+        }
+
+        /* --- LOGICA MINI-GIOCO GEOGRAFIA (GIORNO 4) --- */
+        const regioniItalia = [
+            "Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
+            "Friuli-Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
+            "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia",
+            "Toscana", "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto"
+        ];
+
+        // Mappatura dei file salvati con trattino basso
+        const fileCartine = {
+            "Abruzzo": "abruzzo.png",
+            "Basilicata": "basilicata.png",
+            "Calabria": "calabria.png",
+            "Campania": "campania.png",
+            "Emilia-Romagna": "emilia_romagna.png",
+            "Friuli-Venezia Giulia": "friuli_venezia_giulia.png",
+            "Lazio": "lazio.png",
+            "Liguria": "liguria.png",
+            "Lombardia": "lombardia.png",
+            "Marche": "marche.png",
+            "Molise": "molise.png",
+            "Piemonte": "piemonte.png",
+            "Puglia": "puglia.png",
+            "Sardegna": "sardegna.png",
+            "Sicilia": "sicilia.png",
+            "Toscana": "toscana.png",
+            "Trentino-Alto Adige": "trentino_alto_adige.png",
+            "Umbria": "umbria.png",
+            "Valle d'Aosta": "valle_daosta.png",
+            "Veneto": "veneto.png"
+        };
+
+        // Database dei quiz sui capoluoghi per tutte le regioni
+        const databaseQuizRegioni = {
+            "Abruzzo": { capoluogo: "L'Aquila", opzioni: ["L'Aquila", "Pescara", "Chieti"] },
+            "Basilicata": { capoluogo: "Potenza", opzioni: ["Potenza", "Matera", "Melfi"] },
+            "Calabria": { capoluogo: "Catanzaro", opzioni: ["Catanzaro", "Reggio Calabria", "Cosenza"] },
+            "Campania": { capoluogo: "Napoli", opzioni: ["Napoli", "Salerno", "Caserta"] },
+            "Emilia-Romagna": { capoluogo: "Bologna", opzioni: ["Bologna", "Parma", "Modena"] },
+            "Friuli-Venezia Giulia": { capoluogo: "Trieste", opzioni: ["Trieste", "Udine", "Pordenone"] },
+            "Lazio": { capoluogo: "Roma", opzioni: ["Roma", "Latina", "Viterbo"] },
+            "Liguria": { capoluogo: "Genova", opzioni: ["Genova", "Savona", "La Spezia"] },
+            "Lombardia": { capoluogo: "Milano", opzioni: ["Milano", "Brescia", "Bergamo"] },
+            "Marche": { capoluogo: "Ancona", opzioni: ["Ancona", "Macerata", "Pesaro"] },
+            "Molise": { capoluogo: "Campobasso", opzioni: ["Campobasso", "Isernia", "Termoli"] },
+            "Piemonte": { capoluogo: "Torino", opzioni: ["Torino", "Novara", "Cuneo"] },
+            "Puglia": { capoluogo: "Bari", opzioni: ["Bari", "Lecce", "Foggia"] },
+            "Sardegna": { capoluogo: "Cagliari", opzioni: ["Cagliari", "Sassari", "Oristano"] },
+            "Sicilia": { capoluogo: "Palermo", opzioni: ["Palermo", "Catania", "Messina"] },
+            "Toscana": { capoluogo: "Firenze", opzioni: ["Firenze", "Pisa", "Siena"] },
+            "Trentino-Alto Adige": { capoluogo: "Trento", opzioni: ["Trento", "Bolzano", "Rovereto"] },
+            "Umbria": { capoluogo: "Perugia", opzioni: ["Perugia", "Terni", "Orvieto"] },
+            "Valle d'Aosta": { capoluogo: "Aosta", opzioni: ["Aosta", "Courmayeur", "Saint-Vincent"] },
+            "Veneto": { capoluogo: "Venezia", opzioni: ["Venezia", "Verona", "Padova"] }
+        };
+
+        function openGeografiaHome() {
+            const modalContentBox = document.getElementById('modal-content-box');
+            modalContentBox.className = "modal-content geo-theme"; // Applica stile personalizzato senza verde
+            
+            const modalBody = document.getElementById('modal-body');
+            
+            let regioniButtonsHTML = '';
+            regioniItalia.forEach(regione => {
+                regioniButtonsHTML += `<button class="btn-region" onclick="selectRegion('${regione}')">${regione}</button>`;
+            });
+
+            modalBody.innerHTML = `
+                <h3 style="color: var(--gold); margin-top: 0; font-size: 1.3rem;">🇮🇹 Giorno 4: Le Province d'Italia</h3>
+                <p style="font-size: 0.95rem; color: var(--gold-light); margin-bottom: 12px;">Scegli una regione sulla mappa o dall'elenco!</p>
+                <div class="geo-map-container">
+                    <img src="cartina_italia.png" alt="Cartina Italia" class="geo-map-img" onerror="this.style.display='none'">
+                </div>
+                <div class="regions-grid">
+                    ${regioniButtonsHTML}
+                </div>
+            `;
+        }
+
+        function selectRegion(regionName) {
+            const modalContentBox = document.getElementById('modal-content-box');
+            modalContentBox.className = "modal-content geo-theme";
+            
+            const modalBody = document.getElementById('modal-body');
+            const fileName = fileCartine[regionName] || (regionName.toLowerCase().replace(/['\s-]+/g, '_') + '.png');
+            const quizData = databaseQuizRegioni[regionName];
+
+            // Mischia le opzioni di risposta casualmente per il quiz
+            let opzioniMescolate = [...quizData.opzioni].sort(() => Math.random() - 0.5);
+
+            let opzioniHTML = '';
+            opzioniMescolate.forEach(opt => {
+                opzioniHTML += `<button class="btn-quiz-opt" onclick="checkGeoAnswer('${regionName}', '${opt}', '${quizData.capoluogo}')">${opt}</button>`;
+            });
+
+            modalBody.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <button class="btn-back" onclick="openGeografiaHome()">⬅️ Torna alla mappa</button>
+                    <h3 style="color: var(--gold); margin: 0; font-size: 1.2rem;">${regionName}</h3>
+                </div>
+                <div class="geo-map-container" style="max-width: 240px; margin: 0 auto 10px auto;">
+                    <img src="${fileName}" alt="${regionName}" class="geo-map-img" onerror="this.style.display='none'">
+                </div>
+                <div class="quiz-box">
+                    <p style="font-size: 1.05rem; color: var(--gold-light); margin: 0 0 10px 0;">Qual è il capoluogo principale di questa regione?</p>
+                    <div class="quiz-options">
+                        ${opzioniHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function checkGeoAnswer(regionName, selectedOpt, correctOpt) {
+            const modalBody = document.getElementById('modal-body');
+
+            if (selectedOpt === correctOpt) {
+                modalBody.innerHTML = `
+                    <h3 style="color: var(--gold); margin-top: 20px;">🎉 Risposta Esatta! 🎉</h3>
+                    <p style="font-size: 1.1rem; color: var(--cream); margin: 15px 0;">Il capoluogo della ${regionName} è proprio <strong>${correctOpt}</strong>!</p>
+                    <button class="btn-restart" onclick="openGeografiaHome()">Scegli un'altra regione</button>
+                `;
+            } else {
+                modalBody.innerHTML = `
+                    <h3 style="color: #ff6b6b; margin-top: 20px;">❌ Non è corretto!</h3>
+                    <p style="font-size: 1.1rem; color: var(--cream); margin: 15px 0;">Ritenta la sfida per la ${regionName}.</p>
+                    <button class="btn-restart" onclick="selectRegion('${regionName}')">Riprova</button>
+                `;
+            }
+        }
+
+        function openModal(day) {
+            const modal = document.getElementById('modal');
+            const modalContentBox = document.getElementById('modal-content-box');
+
+            if (day === 2) {
+                modalContentBox.className = "modal-content"; // Ripristina stile verde per Memory
+                startMemoryGame();
+            } else if (day === 4) {
+                openGeografiaHome(); // Applica stile pulito bordeaux/oro
+            } else {
+                modalContentBox.className = "modal-content";
+                const modalBody = document.getElementById('modal-body');
+                const testo = sorprese[day] || `Sorpresa speciale per il giorno ${day}!`;
+                modalBody.innerHTML = `
+                    <h2 style="color: var(--gold); margin-top: 0;">✨ Giorno ${day} ✨</h2>
+                    <p style="font-size: 1.1rem; line-height: 1.6; margin: 20px 0;">${testo}</p>
+                `;
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        function renderCalendar() {
+            const openedGifts = getOpenedGifts();
+            const gridContainer = document.getElementById('grid-container');
+            const surprisesContainer = document.getElementById('surprises-container');
+            const surprisesList = document.getElementById('surprises-list');
+            const completionBanner = document.getElementById('completion-banner');
+            
+            gridContainer.innerHTML = '';
+            surprisesList.innerHTML = '';
+
+            let completati = openedGifts.length;
+            let totale = 24;
+            let percentuale = Math.round((completati / totale) * 100);
+            let posizioneSlitta = Math.min(percentuale, 92);
+
+            document.getElementById('progress-text').innerText = `Magia del Natale: ${percentuale}%`;
+            document.getElementById('count-text').innerText = `${completati} / ${totale} pacchi scartati`;
+            document.getElementById('bar-fill').style.width = percentuale + '%';
+            document.getElementById('sleigh-marker').style.left = posizioneSlitta + '%';
+
+            for (let giorno = 1; giorno <= 24; giorno++) {
+                const giaAperto = openedGifts.includes(giorno);
+                const nomeFile = giaAperto ? `Pacco_aperto${giorno}.png` : `Pacco_chiuso${giorno}.png`;
+                const fallbackFile = `Pacco_chiuso${giorno}.png`;
+
+                const tileDiv = document.createElement('div');
+                tileDiv.className = 'gift-tile';
+                tileDiv.innerHTML = `
+                    <img src="${nomeFile}" alt="Giorno ${giorno}" onerror="this.src='${fallbackFile}'">
+                `;
+
+                tileDiv.onclick = () => {
+                    if (!giaAperto) {
+                        openedGifts.push(giorno);
+                        saveOpenedGifts(openedGifts);
+                        renderCalendar();
+                    }
+                    openModal(giorno);
+                };
+
+                gridContainer.appendChild(tileDiv);
+            }
+
+            if (openedGifts.length > 0) {
+                surprisesContainer.style.display = 'block';
+                openedGifts.sort((a, b) => a - b);
+                
+                openedGifts.forEach(g => {
+                    const testoSorpresa = sorprese[g] || `Sorpresa speciale per il giorno ${g}!`;
+                    const card = document.createElement('div');
+                    card.className = 'surprise-card';
+                    card.innerHTML = `<strong>Giorno ${g}:</strong> ${testoSorpresa}`;
+                    surprisesList.appendChild(card);
+                });
+            } else {
+                surprisesContainer.style.display = 'none';
+            }
+
+            if (completati === 24) {
+                completionbanner.style.display = 'block';
+            } else {
+                completionBanner.style.display = 'none';
+            }
+        }
+
+        renderCalendar();
+    </script>
+</body>
+</html>
