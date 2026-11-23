@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 6 - L'Impiccato Invernale</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container {
+            display: none;
+        }
+
+        .game-container.active {
+            background-color: #faf6f5;
+            background-image: url('sfondo6.png');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            border: 3px solid var(--oro);
+            border-radius: 15px;
+            /* Padding calibrato per la grafica con titolo in alto */
+            padding: 135px 15px 20px 15px;
+            max-width: 400px;
+            width: 92%;
+            margin: 15px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Spaziatore per lasciare il titolo libero */
+        .title-space {
+            height: 30px;
+            width: 100%;
+        }
+
+        /* Caselle parola */
+        .word-grid {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            width: 100%;
+            margin-bottom: 14px;
+        }
+
+        .letter-box {
+            flex: 1;
+            max-width: 26px;
+            height: 32px;
+            background: #2b7bba;
+            border: 1.5px solid #1f3a60;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            user-select: none;
+        }
+
+        .letter-box.revealed {
+            background: #1f3a60;
+            animation: popIn 0.2s ease-out;
+        }
+
+        .letter-box.missed {
+            background: #c0392b;
+            color: #ffeaa7;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.7); }
+            100% { transform: scale(1); }
+        }
+
+        /* Tastiera compatta */
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            max-width: 310px;
+            margin: 0 auto 10px auto;
+        }
+
+        .key-row {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .key-btn {
+            flex: 1;
+            max-width: 27px;
+            height: 33px;
+            background: var(--crema);
+            color: var(--bordeaux-scuro);
+            border: 1.5px solid var(--oro);
+            border-radius: 5px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .key-btn:active:not(:disabled) {
+            transform: scale(0.92);
+        }
+
+        .key-btn:disabled {
+            cursor: default;
+        }
+
+        .key-btn.hit {
+            background: var(--verde);
+            color: #fff;
+            border-color: var(--verde);
+        }
+
+        .key-btn.miss {
+            background: #bdc3c7;
+            color: #7f8c8d;
+            border-color: #bdc3c7;
+            opacity: 0.6;
+        }
+
+        /* Vite (Fiocchi di neve) posizionati sotto la tastiera */
+        .lives-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 4px 12px;
+            border-radius: 15px;
+            border: 1px solid var(--oro);
+        }
+
+        .life-snowflake {
+            position: relative;
+            font-size: 1.4rem;
+            line-height: 1;
+            transition: transform 0.25s, opacity 0.25s;
+            user-select: none;
+        }
+
+        .life-snowflake.lost {
+            opacity: 0.45;
+            transform: scale(0.9);
+        }
+
+        .life-snowflake.lost::after {
+            content: "✖";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #c0392b;
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-shadow: 0 0 3px #fff, 0 0 3px #fff;
+        }
+
+        .feedback-msg {
+            min-height: 18px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO DI CANVA -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 6</div>
+        <img src="Pacco_chiuso6.png" alt="Pacco Giorno 6" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. MINIGIOCO L'IMPICCATO -->
+    <div class="game-container" id="gameContainer">
+        <div class="title-space"></div>
+
+        <div class="word-grid" id="wordDisplay"></div>
+
+        <div class="keyboard" id="keyboard"></div>
+        
+        <div class="lives-container">
+            <span class="life-snowflake" id="life-1">❄️</span>
+            <span class="life-snowflake" id="life-2">❄️</span>
+            <span class="life-snowflake" id="life-3">❄️</span>
+            <span class="life-snowflake" id="life-4">❄️</span>
+            <span class="life-snowflake" id="life-5">❄️</span>
+        </div>
+
+        <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <script>
+        const PAROLA_SEGRETA = "PALISSANDRO";
+        const VITE_MAX = 5;
+
+        let viteRimaste = VITE_MAX;
+        let lettereIndovinate = new Set();
+        let giocoFinito = false;
+
+        const layoutTastiera = [
+            ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+            ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+            ["Z", "X", "C", "V", "B", "N", "M"]
+        ];
+
+        function scartaRegalo() {
+            const giftScreen = document.getElementById('giftScreen');
+            const gameContainer = document.getElementById('gameContainer');
+            
+            if (giftScreen) giftScreen.style.display = 'none';
+            if (gameContainer) gameContainer.classList.add('active');
+            
+            inizializzaGioco();
+        }
+
+        function inizializzaGioco() {
+            aggiornaParola();
+            creaTastiera();
+        }
+
+        function aggiornaParola(rivelaTutto = false) {
+            const container = document.getElementById('wordDisplay');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (let i = 0; i < PAROLA_SEGRETA.length; i++) {
+                const lettera = PAROLA_SEGRETA[i];
+                const box = document.createElement('div');
+                box.className = 'letter-box';
+
+                if (lettereIndovinate.has(lettera)) {
+                    box.textContent = lettera;
+                    box.classList.add('revealed');
+                } else if (rivelaTutto) {
+                    box.textContent = lettera;
+                    box.classList.add('missed');
+                } else {
+                    box.textContent = '';
+                }
+
+                container.appendChild(box);
+            }
+        }
+
+        function creaTastiera() {
+            const kb = document.getElementById('keyboard');
+            if (!kb) return;
+            kb.innerHTML = '';
+
+            layoutTastiera.forEach(riga => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'key-row';
+
+                riga.forEach(lettera => {
+                    const btn = document.createElement('button');
+                    btn.className = 'key-btn';
+                    btn.textContent = lettera;
+                    btn.id = `key-${lettera}`;
+                    btn.onclick = () => provaLettera(lettera, btn);
+                    rowDiv.appendChild(btn);
+                });
+
+                kb.appendChild(rowDiv);
+            });
+        }
+
+        function provaLettera(lettera, btn) {
+            if (giocoFinito || btn.disabled) return;
+
+            btn.disabled = true;
+            const feedback = document.getElementById('feedbackMsg');
+
+            if (PAROLA_SEGRETA.includes(lettera)) {
+                btn.classList.add('hit');
+                lettereIndovinate.add(lettera);
+                aggiornaParola();
+                controllaVittoria();
+            } else {
+                btn.classList.add('miss');
+                const vitaPersa = document.getElementById(`life-${viteRimaste}`);
+                if (vitaPersa) vitaPersa.classList.add('lost');
+                viteRimaste--;
+
+                if (viteRimaste <= 0) {
+                    giocoFinito = true;
+                    aggiornaParola(true);
+                    if (feedback) {
+                        feedback.style.color = "#c0392b";
+                        feedback.innerHTML = `❄️ Vite esaurite! La parola era <strong>${PAROLA_SEGRETA}</strong>.<br><span style='color: var(--bordeaux-scuro); font-size: 0.75rem;'>Torna domani!</span>`;
+                    }
+                }
+            }
+        }
+
+        function controllaVittoria() {
+            const tutteTrovate = PAROLA_SEGRETA.split('').every(l => lettereIndovinate.has(l));
+            if (tutteTrovate) {
+                giocoFinito = true;
+                const feedback = document.getElementById('feedbackMsg');
+                if (feedback) {
+                    feedback.style.color = "var(--verde)";
+                    feedback.innerHTML = "🎉 <strong>Bravissima!</strong> Hai indovinato <strong>PALISSANDRO</strong>! ✨<br><span style='color: var(--bordeaux-scuro); font-size: 0.75rem;'>Torna domani!</span>";
+                }
+            }
+        }
+
+        document.addEventListener("keydown", (e) => {
+            const gameContainer = document.getElementById('gameContainer');
+            if (gameContainer && gamecontainer.classList.contains('active') && !giocoFinito) {
+                const key = e.key.toUpperCase();
+                if (/^[A-Z]$/.test(key)) {
+                    const btn = document.getElementById(`key-${key}`);
+                    if (btn && !btn.disabled) provaLettera(key, btn);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

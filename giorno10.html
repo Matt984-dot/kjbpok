@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 10 - Quiz Geografico Mondo</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .world-quiz-container {
+            display: none;
+            position: relative;
+            max-width: 420px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background-color: #faf6f5;
+            padding: 18px 15px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .world-quiz-container.active {
+            display: block;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--bordeaux-scuro, #5c061c);
+            margin-bottom: 12px;
+        }
+
+        .world-map-img {
+            width: 100%;
+            max-height: 220px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 14px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1.5px solid var(--oro, #d4af37);
+            padding: 6px;
+            box-sizing: border-box;
+        }
+
+        .quiz-question {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--bordeaux-scuro, #5c061c);
+            margin-bottom: 14px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .option-btn {
+            background: #ffffff;
+            color: var(--bordeaux-scuro, #5c061c);
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 25px;
+            padding: 10px 16px;
+            font-size: 0.92rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            transition: all 0.18s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #fff6d6;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            opacity: 0.85;
+        }
+
+        .option-btn.corretta {
+            background: #1f6e3a;
+            border-color: #1f6e3a;
+            color: #ffffff;
+            opacity: 1;
+        }
+
+        .option-btn.errata {
+            background: #9e1b24;
+            border-color: #9e1b24;
+            color: #ffffff;
+            opacity: 1;
+        }
+
+        .feedback-box {
+            margin-top: 14px;
+            min-height: 38px;
+            font-size: 0.88rem;
+            font-weight: bold;
+            color: var(--bordeaux-scuro, #5c061c);
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+        }
+
+        .next-btn {
+            display: none;
+            margin: 14px auto 0;
+            background: var(--bordeaux-scuro, #5c061c);
+            color: #fffdf9;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 25px;
+            padding: 10px 24px;
+            font-size: 0.92rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .end-screen {
+            display: none;
+            padding: 10px 5px;
+        }
+
+        .end-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--bordeaux-scuro, #5c061c);
+            margin-bottom: 10px;
+        }
+
+        .end-score {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--bordeaux-scuro, #5c061c);
+            background: #fff6d6;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 10</div>
+        <img src="Pacco_chiuso10.png" alt="Pacco Giorno 10" class="gift-img" onclick="apriQuiz()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. QUIZ SUL MONDO -->
+    <div class="world-quiz-container" id="worldQuiz">
+        <div id="activeQuizScreen">
+            <div class="quiz-header">
+                <span id="progressText">Domanda 1 / 12</span>
+                <span id="scoreText">Punti: 0</span>
+            </div>
+
+            <img src="mondo1.png" alt="Mappa del mondo" class="world-map-img" id="worldImage">
+
+            <div class="quiz-question" id="questionText">Caricamento...</div>
+
+            <div class="options-grid" id="optionsGrid"></div>
+
+            <div class="feedback-box" id="feedbackBox">Scegli una delle opzioni qui sopra.</div>
+
+            <button class="next-btn" id="nextBtn" onclick="prossimaDomanda()">Avanti ➔</button>
+        </div>
+
+        <div class="end-screen" id="endScreen">
+            <div class="end-title">🌍 Giro del Mondo completato!</div>
+            <div class="end-score" id="finalScoreBox"></div>
+            <button class="option-btn" onclick="riavviaQuiz()">↺ Gioca ancora</button>
+        </div>
+    </div>
+
+    <script>
+        const paesiMondo = [
+            {
+                img: 'mondo1.png',
+                paese: 'Nuova Zelanda',
+                distrattoriPaese: ['Papua Nuova Guinea', 'Australia', 'Madagascar'],
+                capitale: 'Wellington',
+                distrattoriCapitale: ['Canberra', 'Adelaide', 'Christchurch']
+            },
+            {
+                img: 'mondo2.png',
+                paese: 'Tunisia',
+                distrattoriPaese: ['Algeria', 'Egitto', 'Mali'],
+                capitale: 'Tunisi',
+                distrattoriCapitale: ['Tripoli', 'Casablanca', 'Bengasi']
+            },
+            {
+                img: 'mondo3.png',
+                paese: 'Argentina',
+                distrattoriPaese: ['Cile', 'Paraguay', 'Bolivia'],
+                capitale: 'Buenos Aires',
+                distrattoriCapitale: ['Porto Alegre', 'Asuncion', 'Montevideo']
+            },
+            {
+                img: 'mondo4.png',
+                paese: 'Giordania',
+                distrattoriPaese: ['Oman', 'Yemen', 'Libano'],
+                capitale: 'Amman',
+                distrattoriCapitale: ['Beirut', 'Baghdad', 'Damasco']
+            },
+            {
+                img: 'mondo5.png',
+                paese: 'Messico',
+                distrattoriPaese: ['El Salvador', 'Costa Rica', 'Nicaragua'],
+                capitale: 'Città del Messico',
+                distrattoriCapitale: ['Managua', 'Cancun', 'Austin']
+            },
+            {
+                img: 'mondo6.png',
+                paese: 'Indonesia',
+                distrattoriPaese: ['Malesia', 'Laos', 'Thailandia'],
+                capitale: 'Giacarta',
+                distrattoriCapitale: ['Bangkok', 'Manila', 'Vientiane']
+            }
+        ];
+
+        const domande = [];
+        paesiMondo.forEach((item) => {
+            domande.push({
+                img: item.img,
+                testo: 'Quale paese è evidenziato?',
+                corretta: item.paese,
+                opzioni: [item.paese, ...item.distrattoriPaese]
+            });
+            domande.push({
+                img: item.img,
+                testo: `Qual è la capitale di ${item.paese}?`,
+                corretta: item.capitale,
+                opzioni: [item.capitale, ...item.distrattoriCapitale]
+            });
+        });
+
+        let indiceCorrente = 0;
+        let punteggio = 0;
+        let rispostaData = false;
+
+        function apriQuiz() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('worldQuiz').classList.add('active');
+            caricaDomanda();
+        }
+
+        function mescolaArray(arr) {
+            const copia = [...arr];
+            for (let i = copia.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copia[i], copia[j]] = [copia[j], copia[i]];
+            }
+            return copia;
+        }
+
+        function caricaDomanda() {
+            rispostaData = false;
+            const d = domande[indiceCorrente];
+
+            document.getElementById('progressText').innerText = `Domanda ${indiceCorrente + 1} / ${domande.length}`;
+            document.getElementById('scoreText').innerText = `Punti: ${punteggio}`;
+            document.getElementById('worldImage').src = d.img;
+            document.getElementById('worldImage').alt = `Mappa ${d.corretta}`;
+            document.getElementById('questionText').innerText = d.testo;
+            document.getElementById('feedbackBox').innerText = 'Tocca la risposta che ritieni corretta.';
+            document.getElementById('nextBtn').style.display = 'none';
+
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+
+            mescolaArray(d.opzioni).forEach((opzione) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opzione;
+                btn.onclick = () => verificaRisposta(btn, opzione, d.corretta);
+                grid.appendChild(btn);
+            });
+        }
+
+        function verificaRisposta(btnCliccato, scelta, corretta) {
+            if (rispostaData) return;
+            rispostaData = true;
+
+            const tuttiBottoni = document.querySelectorAll('#optionsGrid .option-btn');
+            tuttiBottoni.forEach((b) => {
+                b.disabled = true;
+                if (b.innerText === corretta) {
+                    b.classList.add('corretta');
+                }
+            });
+
+            const feedback = document.getElementById('feedbackBox');
+            if (scelta === corretta) {
+                punteggio++;
+                document.getElementById('scoreText').innerText = `Punti: ${punteggio}`;
+                feedback.innerText = '✅ Esatto! Ottima risposta.';
+            } else {
+                btnCliccato.classList.add('errata');
+                feedback.innerText = `❌ Non proprio: la risposta giusta era ${corretta}.`;
+            }
+
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.innerText = (indiceCorrente === domande.length - 1) ? 'Vedi risultato ➔' : 'Avanti ➔';
+            nextBtn.style.display = 'inline-block';
+        }
+
+        function prossimaDomanda() {
+            indiceCorrente++;
+            if (indiceCorrente < domande.length) {
+                caricaDomanda();
+            } else {
+                mostraFineQuiz();
+            }
+        }
+
+        function mostraFineQuiz() {
+            document.getElementById('activeQuizScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'block';
+            document.getElementById('finalScoreBox').innerText =
+                `Hai totalizzato ${punteggio} punti su ${domande.length}!`;
+        }
+
+        function riavviaQuiz() {
+            indiceCorrente = 0;
+            punteggio = 0;
+            document.getElementById('endScreen').style.display = 'none';
+            document.getElementById('activeQuizScreen').style.display = 'block';
+            caricaDomanda();
+        }
+    </script>
+</body>
+</html>

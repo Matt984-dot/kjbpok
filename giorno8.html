@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 8 - Decora l'Albero</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .tree-game-container {
+            display: none;
+            position: relative;
+            max-width: 400px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background-color: #faf6f5;
+            padding: 15px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .tree-game-container.active {
+            display: block;
+        }
+
+        .tree-stage-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 10px;
+            transition: opacity 0.25s ease-in-out;
+            margin-bottom: 15px;
+        }
+
+        /* Pannello dei pulsanti di scelta (visibili, puliti e sotto l'albero) */
+        .choices-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .game-btn {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--bordeaux-scuro, #5c061c);
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+        .game-btn:active {
+            transform: scale(0.97);
+            background: var(--oro, #d4af37);
+            color: white;
+        }
+
+        /* Testo dello step corrente (es. "Scegli le luci", "Scegli le palline") */
+        .step-instruction {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--bordeaux-scuro, #5c061c);
+            margin-bottom: 12px;
+        }
+
+        /* Messaggio finale al completamento */
+        .completion-banner {
+            display: none;
+            background: rgba(250, 246, 245, 0.98);
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            color: var(--bordeaux-scuro, #5c061c);
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: 10px;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tasto ricomincia */
+        .controls-bar {
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: var(--bordeaux-scuro, #5c061c);
+            border: 1.5px solid var(--oro, #d4af37);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 8</div>
+        <img src="Pacco_chiuso8.png" alt="Pacco Giorno 8" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. GIOCO DECORAZIONE ALBERO CON PULSANTI -->
+    <div class="tree-game-container" id="treeGame">
+        <img src="albero_base.png" alt="Albero di Natale" class="tree-stage-img" id="treeImage">
+
+        <!-- Istruzione dinamica -->
+        <div class="step-instruction" id="stepInstruction">✨ Scegli le luci per il tuo albero:</div>
+
+        <!-- Pannello dei pulsanti (cambiano a seconda dello step) -->
+        <div class="choices-panel" id="choicesPanel">
+            <!-- STEP 1: Luci -->
+            <div id="step1Buttons">
+                <button class="game-btn" onclick="scegliLuci(1)">🟡 Luci Calde</button>
+                <button class="game-btn" onclick="scegliLuci(2)">🌈 Luci Multicolore</button>
+            </div>
+
+            <!-- STEP 2: Palline (nascosto all'inizio) -->
+            <div id="step2Buttons" style="display: none;">
+                <button class="game-btn" onclick="scegliPalline(1)">🔴 Set Palline Tradizionale</button>
+                <button class="game-btn" onclick="scegliPalline(2)">🔵 Set Palline Elegante</button>
+            </div>
+        </div>
+
+        <!-- Messaggio finale -->
+        <div class="completion-banner" id="completionBanner">
+            🎄 Capolavoro! Il tuo albero di Natale è perfettamente decorato! ✨
+        </div>
+
+        <!-- Tasto ricomincia -->
+        <div class="controls-bar">
+            <button class="reset-btn" id="resetBtn" onclick="resetAlbero()">↺ Ricomincia</button>
+        </div>
+    </div>
+
+    <script>
+        let sceltaLuce = null;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('treeGame').classList.add('active');
+        }
+
+        function cambiaImmagineConDissolvenza(nuovoSrc, callback) {
+            const img = document.getElementById('treeImage');
+            img.style.opacity = '0.4';
+            setTimeout(() => {
+                img.src = nuovoSrc;
+                img.style.opacity = '1';
+                if (callback) callback();
+            }, 150);
+        }
+
+        function scegliLuci(tipoLuce) {
+            sceltaLuce = tipoLuce;
+            cambiaImmagineConDissolvenza(`albero_luci${tipoLuce}.png`, () => {
+                // Passa allo step delle palline
+                document.getElementById('step1Buttons').style.display = 'none';
+                document.getElementById('step2Buttons').style.display = 'block';
+                document.getElementById('stepInstruction').innerText = "✨ Ora scegli le palline:";
+                document.getElementById('resetBtn').style.display = 'inline-block';
+            });
+        }
+
+        function scegliPalline(tipoPalline) {
+            if (!sceltaLuce) return;
+            const immagineFinale = `albero_l${sceltaLuce}_p${tipoPalline}.png`;
+            
+            cambiaImmagineConDissolvenza(immagineFinale, () => {
+                // Nasconde i pulsanti e mostra il banner finale
+                document.getElementById('choicesPanel').style.display = 'none';
+                document.getElementById('stepInstruction').style.display = 'none';
+                document.getElementById('completionBanner').style.display = 'block';
+            });
+        }
+
+        function resetAlbero() {
+            sceltaLuce = null;
+            cambiaImmagineConDissolvenza('albero_base.png', () => {
+                document.getElementById('step1Buttons').style.display = 'block';
+                document.getElementById('step2Buttons').style.display = 'none';
+                document.getElementById('choicesPanel').style.display = 'flex';
+                document.getElementById('stepInstruction').style.display = 'block';
+                document.getElementById('stepInstruction').innerText = "✨ Scegli le luci per il tuo albero:";
+                document.getElementById('completionBanner').style.display = 'none';
+                document.getElementById('resetBtn').style.display = 'none';
+            });
+        }
+    </script>
+</body>
+</html>

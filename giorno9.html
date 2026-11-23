@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 9 - Slot di Natale</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .slot-game-container {
+            display: none;
+            position: relative;
+            max-width: 400px;
+            width: 92%;
+            margin: 15px auto;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background-color: #faf6f5;
+            padding: 20px 15px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .slot-game-container.active {
+            display: block;
+        }
+
+        .slot-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: var(--bordeaux-scuro, #5c061c);
+            margin-bottom: 16px;
+        }
+
+        .reels-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            background: #2b030d;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 14px;
+            padding: 16px 10px;
+            margin-bottom: 18px;
+            box-shadow: inset 0 4px 12px rgba(0,0,0,0.6);
+        }
+
+        .reel {
+            width: 82px;
+            height: 82px;
+            background: #ffffff;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            box-sizing: border-box;
+            user-select: none;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+            transition: transform 0.15s ease;
+        }
+
+        .reel img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .reel.spinning {
+            transform: scale(1.04);
+        }
+
+        .spin-btn {
+            background: var(--bordeaux-scuro, #5c061c);
+            color: #fffdf9;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 25px;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.15s ease, opacity 0.2s ease;
+        }
+
+        .spin-btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .slot-result {
+            margin-top: 16px;
+            min-height: 44px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1.5px solid var(--oro, #d4af37);
+            border-radius: 12px;
+            padding: 10px 12px;
+            color: var(--bordeaux-scuro, #5c061c);
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slot-result.jackpot {
+            background: #fff6d6;
+            border-width: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 9</div>
+        <img src="Pacco_chiuso9.png" alt="Pacco Giorno 9" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. SLOT MACHINE DI NATALE -->
+    <div class="slot-game-container" id="slotGame">
+        <div class="slot-title">🎰 Slot delle Feste</div>
+
+        <div class="reels-box">
+            <div class="reel" id="reel1"><img src="slot1.png" alt="Simbolo 1"></div>
+            <div class="reel" id="reel2"><img src="slot2.png" alt="Simbolo 2"></div>
+            <div class="reel" id="reel3"><img src="slot3.png" alt="Simbolo 3"></div>
+        </div>
+
+        <button class="spin-btn" id="spinBtn" onclick="avviaSlot()">✨ Gira i rulli!</button>
+
+        <div class="slot-result" id="slotResult">
+            Premi "Gira i rulli!" per tentare la fortuna di oggi.
+        </div>
+    </div>
+
+    <script>
+        const simboli = [
+            { src: 'slot1.png', nome: 'Simbolo 1' },
+            { src: 'slot2.png', nome: 'Simbolo 2' },
+            { src: 'slot3.png', nome: 'Simbolo 3' },
+            { src: 'slot4.png', nome: 'Simbolo 4' },
+            { src: 'slot5.png', nome: 'Simbolo 5' }
+        ];
+
+        const messaggiCoppia = [
+            "Quasi tris! Un altro giro e ci siamo.",
+            "Due uguali! La fortuna delle feste sta scaldando i motori.",
+            "Così vicino al colpaccio! Riprova subito."
+        ];
+
+        const messaggiMix = [
+            "Bel mix natalizio! Vuoi provare a fare tris?",
+            "L'atmosfera c'è tutta, riprova per il colpaccio!",
+            "Spirito delle feste attivo: ritenta se ti va!"
+        ];
+
+        let inCorso = false;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('slotGame').classList.add('active');
+        }
+
+        function simboloCasuale() {
+            return simboli[Math.floor(Math.random() * simboli.length)];
+        }
+
+        function setImmagineRullo(reelId, simbolo) {
+            const img = document.querySelector(`#${reelId} img`);
+            img.src = simbolo.src;
+            img.alt = simbolo.nome;
+        }
+
+        function avviaSlot() {
+            if (inCorso) return;
+            inCorso = true;
+
+            const btn = document.getElementById('spinBtn');
+            const resultBox = document.getElementById('slotResult');
+            const reelIds = ['reel1', 'reel2', 'reel3'];
+
+            btn.disabled = true;
+            resultBox.classList.remove('jackpot');
+            resultBox.innerText = "I rulli stanno girando...";
+
+            const intervalli = reelIds.map((id) => {
+                const reelEl = document.getElementById(id);
+                reelEl.classList.add('spinning');
+                return setInterval(() => {
+                    setImmagineRullo(id, simboloCasuale());
+                }, 80);
+            });
+
+            const risultatiFinali = [simboloCasuale(), simboloCasuale(), simboloCasuale()];
+            const tempiStop = [700, 1100, 1500];
+
+            tempiStop.forEach((tempo, idx) => {
+                setTimeout(() => {
+                    clearInterval(intervalli[idx]);
+                    setImmagineRullo(reelIds[idx], risultatiFinali[idx]);
+                    document.getElementById(reelIds[idx]).classList.remove('spinning');
+
+                    if (idx === reelIds.length - 1) {
+                        mostraEsito(risultatiFinali, resultBox, btn);
+                        inCorso = false;
+                    }
+                }, tempo);
+            });
+        }
+
+        function mostraEsito(risultati, resultBox, btn) {
+            const [a, b, c] = risultati;
+            const ugualiAB = a.src === b.src;
+            const ugualiBC = b.src === c.src;
+            const ugualiAC = a.src === c.src;
+
+            if (ugualiAB && ugualiBC) {
+                resultBox.classList.add('jackpot');
+                resultBox.innerText = `🎉 TRIS PERFETTO! Giornata super fortunata in arrivo!`;
+            } else if (ugualiAB || ugualiBC || ugualiAC) {
+                const frase = messaggiCoppia[Math.floor(Math.random() * messaggiCoppia.length)];
+                resultBox.innerText = frase;
+            } else {
+                const frase = messaggiMix[Math.floor(Math.random() * messaggiMix.length)];
+                resultBox.innerText = frase;
+            }
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>

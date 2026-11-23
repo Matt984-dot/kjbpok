@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 5 - Quiz Geografia: Europa</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container.active {
+            background: #fff;
+            border: 3px solid var(--oro);
+            border-radius: 15px;
+            padding: 15px;
+            max-width: 390px;
+            margin: 12px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .progress-badge {
+            display: inline-block;
+            background: var(--bordeaux-scuro);
+            color: var(--oro);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border: 1px solid var(--oro);
+        }
+
+        .map-frame {
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto 12px auto;
+            border: 2px solid var(--oro);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #d3c5b8;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .map-frame img {
+            width: 100%;
+            max-height: 295px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .question-prompt {
+            color: var(--bordeaux-scuro);
+            font-size: 1.05rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            min-height: 26px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+            margin-bottom: 10px;
+        }
+
+        .option-btn {
+            background: var(--crema);
+            color: var(--bordeaux-scuro);
+            border: 2px solid var(--oro);
+            border-radius: 10px;
+            padding: 11px 6px;
+            font-size: 0.92rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s, color 0.2s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            word-wrap: break-word;
+        }
+
+        .option-btn:active {
+            transform: scale(0.95);
+        }
+
+        .option-btn.correct {
+            background: var(--verde);
+            color: var(--crema);
+            border-color: var(--verde);
+        }
+
+        .option-btn.wrong {
+            background: #c0392b;
+            color: #fff;
+            border-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO DI CANVA -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 5</div>
+        <img src="Pacco_chiuso5.png" alt="Pacco Giorno 5" class="gift-img" onclick="scartaRegalo()">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. MINIGIOCO GEOGRAFIA EUROPA -->
+    <div class="game-container" id="gameContainer">
+        <div class="progress-badge" id="progressBadge">Tappa 1 di 5</div>
+
+        <div class="map-frame">
+            <img id="mapImage" src="europa5_1.png" alt="Mappa Europa">
+        </div>
+
+        <div class="question-prompt" id="questionPrompt">🌍 Qual è lo Stato evidenziato?</div>
+
+        <div class="options-grid" id="optionsGrid"></div>
+
+        <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <script>
+        const domandeEuropa = [
+            {
+                immagine: "europa5_1.png",
+                statoCorretto: "Finlandia",
+                opzioniStato: ["Finlandia", "Svezia", "Danimarca", "Islanda"],
+                capitaleCorretta: "Helsinki",
+                opzioniCapitale: ["Helsinki", "Stoccolma", "Oslo", "Riga"]
+            },
+            {
+                immagine: "europa5_2.png",
+                statoCorretto: "Austria",
+                opzioniStato: ["Austria", "Rep. Ceca", "Slovacchia", "Svizzera"],
+                capitaleCorretta: "Vienna",
+                opzioniCapitale: ["Vienna", "Praga", "Lubiana", "Bratislava"]
+            },
+            {
+                immagine: "europa5_3.png",
+                statoCorretto: "Romania",
+                opzioniStato: ["Romania", "Ungheria", "Moldavia", "Bulgaria"],
+                capitaleCorretta: "Bucarest",
+                opzioniCapitale: ["Bucarest", "Budapest", "Tirana", "Sofia"]
+            },
+            {
+                immagine: "europa5_4.png",
+                statoCorretto: "Lituania",
+                opzioniStato: ["Lituania", "Lettonia", "Estonia", "Bielorussia"],
+                capitaleCorretta: "Vilnius",
+                opzioniCapitale: ["Vilnius", "Riga", "Tallinn", "Copenaghen"]
+            },
+            {
+                immagine: "europa5_5.png",
+                statoCorretto: "Bosnia-Erzegovina",
+                opzioniStato: ["Bosnia-Erzegovina", "Slovenia", "Croazia", "Macedonia del Nord"],
+                capitaleCorretta: "Sarajevo",
+                opzioniCapitale: ["Sarajevo", "Zagabria", "Podgorica", "Pristina"]
+            }
+        ];
+
+        let indiceCorrente = 0;
+        let fase = "stato";
+        let bloccato = false;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('gameContainer').classList.add('active');
+            caricaDomanda();
+        }
+
+        function mescolaArray(array) {
+            const copia = [...array];
+            for (let i = copia.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copia[i], copia[j]] = [copia[j], copia[i]];
+            }
+            return copia;
+        }
+
+        function caricaDomanda() {
+            bloccato = false;
+            const dato = domandeEuropa[indiceCorrente];
+            const feedback = document.getElementById('feedbackMsg');
+            feedback.textContent = "";
+
+            document.getElementById('progressBadge').textContent = `Tappa ${indiceCorrente + 1} di ${domandeEuropa.length}`;
+            document.getElementById('mapImage').src = dato.immagine;
+
+            const prompt = document.getElementById('questionPrompt');
+            const opzioniGrezze = fase === "stato" ? dato.opzioniStato : dato.opzioniCapitale;
+            const opzioniMescolate = mescolaArray(opzioniGrezze);
+
+            if (fase === "stato") {
+                prompt.textContent = "🌍 Qual è lo Stato evidenziato?";
+            } else {
+                prompt.innerHTML = `🏛️ Esatto! Capitale di <strong>${dato.statoCorretto}</strong>?`;
+            }
+
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = "";
+
+            opzioniMescolate.forEach(opzione => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opzione;
+                btn.onclick = () => verificaRisposta(opzione, btn);
+                grid.appendChild(btn);
+            });
+        }
+
+        function verificaRisposta(scelta, btn) {
+            if (bloccato) return;
+
+            const dato = domandeEuropa[indiceCorrente];
+            const rispostaGiusta = fase === "stato" ? dato.statoCorretto : dato.capitaleCorretta;
+            const feedback = document.getElementById('feedbackMsg');
+
+            if (scelta === rispostaGiusta) {
+                bloccato = true;
+                btn.classList.add('correct');
+
+                if (fase === "stato") {
+                    feedback.style.color = "#2ecc71";
+                    feedback.textContent = "✅ Giusto! Ora la capitale...";
+                    setTimeout(() => {
+                        fase = "capitale";
+                        caricaDomanda();
+                    }, 850);
+                } else {
+                    feedback.style.color = "#2ecc71";
+                    feedback.textContent = "🎉 Perfetto!";
+                    setTimeout(() => {
+                        indiceCorrente++;
+                        if (indiceCorrente < domandeEuropa.length) {
+                            fase = "stato";
+                            caricaDomanda();
+                        } else {
+                            mostraVittoria();
+                        }
+                    }, 850);
+                }
+            } else {
+                btn.classList.add('wrong');
+                feedback.style.color = "#e74c3c";
+                feedback.textContent = "❌ Non è lei, riprova!";
+                setTimeout(() => {
+                    btn.classList.remove('wrong');
+                }, 600);
+            }
+        }
+
+        function mostraVittoria() {
+            document.getElementById('optionsGrid').innerHTML = "";
+            document.getElementById('questionPrompt').textContent = "✈️ Tour d'Europa completato!";
+            const feedback = document.getElementById('feedbackMsg');
+            feedback.style.color = "#2ecc71";
+            feedback.innerHTML = "🎉 <strong>Bravissima!</strong> Conosci l'Europa a menadito! 🌍✨<br><br><span style='color: var(--oro); font-size: 0.9rem;'>Torna domani per una nuova sorpresa!</span>";
+        }
+    </script>
+</body>
+</html>

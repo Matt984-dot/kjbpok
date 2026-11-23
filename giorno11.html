@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 11 - 4 Immagini e una Parola</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: var(--bordeaux-scuro, #3d020f);
+            color: #fffdf9;
+        }
+
+        .word-game-container {
+            display: none;
+            position: relative;
+            max-width: 420px;
+            width: 92%;
+            margin: 15px auto;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .word-game-container.active {
+            display: block;
+        }
+
+        .puzzle-board-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto 14px;
+            border: 3px solid var(--oro, #d4af37);
+            border-radius: 16px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        }
+
+        .prompt-label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fffdf9;
+            margin-bottom: 12px;
+        }
+
+        .word-input-box {
+            width: 100%;
+            max-width: 340px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--bordeaux-scuro, #5c061c);
+            background: #f8f2d8;
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 14px;
+            box-sizing: border-box;
+            outline: none;
+            margin-bottom: 14px;
+        }
+
+        .word-input-box::placeholder {
+            color: #6d6558;
+            letter-spacing: 3px;
+        }
+
+        .word-input-box.correct {
+            background: #1f6e3a;
+            border-color: #45c470;
+            color: #ffffff;
+        }
+
+        .word-input-box.wrong {
+            background: #9e1b24;
+            border-color: #ff6b74;
+            color: #ffffff;
+        }
+
+        .buttons-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .check-btn {
+            background: #d9b13b;
+            color: #26030b;
+            border: none;
+            border-bottom: 3px solid #9e7b16;
+            border-radius: 12px;
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .check-btn:active {
+            transform: translateY(1px);
+        }
+
+        .hint-btn {
+            background: #f8f2d8;
+            color: var(--bordeaux-scuro, #5c061c);
+            border: 2px solid var(--oro, #d4af37);
+            border-radius: 12px;
+            padding: 9px 16px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .hint-btn:active {
+            transform: translateY(1px);
+        }
+
+        .status-msg {
+            min-height: 24px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #fff3c4;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 11</div>
+        <img src="Pacco_chiuso11.png" alt="Pacco Giorno 11" class="gift-img" onclick="scartaRegalo()" style="cursor: pointer;">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. GIOCO 4 IMMAGINI E UNA PAROLA -->
+    <div class="word-game-container" id="wordGame">
+        <img src="scintille.png" alt="4 immagini e una parola" class="puzzle-board-img" id="puzzleImg">
+
+        <div class="prompt-label">Qual è la parola nascosta?</div>
+
+        <input
+            type="text"
+            id="wordInput"
+            class="word-input-box"
+            placeholder="SCRIVI QUI"
+            autocomplete="off"
+            autocapitalize="characters"
+            onkeydown="gestisciInvio(event)"
+            oninput="pulisciStatoInput()"
+        >
+
+        <div class="buttons-row">
+            <button class="check-btn" onclick="verificaParola()">Verifica</button>
+            <button class="hint-btn" onclick="mostraIndizio()">💡 Indizio</button>
+        </div>
+
+        <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <script>
+        const PAROLA_SEGRETA = "SCINTILLE";
+        let indizioStep = 0;
+        let completato = false;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('wordGame').classList.add('active');
+            document.getElementById('wordInput').focus();
+        }
+
+        function pulisciStatoInput() {
+            if (completato) return;
+            document.getElementById('wordInput').classList.remove('wrong');
+        }
+
+        function gestisciInvio(event) {
+            if (event.key === 'Enter') {
+                verificaParola();
+            }
+        }
+
+        function verificaParola() {
+            if (completato) return;
+            const input = document.getElementById('wordInput');
+            const status = document.getElementById('statusMsg');
+            const tentativo = input.value.trim().toUpperCase();
+
+            if (!tentativo) {
+                input.classList.remove('wrong');
+                status.innerText = "Scrivi prima la parola nella casella.";
+                return;
+            }
+
+            if (tentativo === PAROLA_SEGRETA) {
+                completato = true;
+                input.value = PAROLA_SEGRETA;
+                input.classList.remove('wrong');
+                input.classList.add('correct');
+                input.disabled = true;
+                status.innerText = "✨ Esatto! La parola è SCINTILLE!";
+            } else {
+                input.classList.remove('correct');
+                input.classList.add('wrong');
+                status.innerText = "❌ Non è la parola giusta, riprova!";
+            }
+        }
+
+        function mostraIndizio() {
+            if (completato) return;
+            const status = document.getElementById('statusMsg');
+            indizioStep++;
+
+            if (indizioStep === 1) {
+                status.innerText = `💡 Ha ${PAROLA_SEGRETA.length} lettere e inizia per "${PAROLA_SEGRETA[0]}".`;
+            } else if (indizioStep === 2) {
+                status.innerText = `💡 Inizia con "${PAROLA_SEGRETA.slice(0, 3)}..." e brilla nelle feste.`;
+            } else {
+                status.innerText = `💡 Inizia con "SC" e finisce con "LE" (${PAROLA_SEGRETA.length} lettere).`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 2 - Calendario dell'Avvento</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 340px;
+            margin: 0 auto 15px auto;
+        }
+        .memory-card {
+            aspect-ratio: 1;
+            background: var(--verde);
+            border: 2px solid var(--oro);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s, background 0.2s;
+            overflow: hidden;
+        }
+        .memory-card.flipped {
+            background: var(--crema);
+            transform: scale(0.95);
+        }
+        .memory-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO DI CANVA -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 2</div>
+        <img src="Pacco_chiuso2.png" alt="Pacco Giorno 2" class="gift-img" onclick="scartaRegalo()">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. IL MINIGIOCO MEMORY CON LE TUE IMMAGINI -->
+    <div class="game-container" id="gameContainer">
+        <h2 class="game-title">🎄 Memory Natalizio</h2>
+        <p style="margin-bottom: 12px; font-size: 0.95rem; opacity: 0.9;">Trova tutte le coppie uguali!</p>
+        
+        <div class="memory-grid" id="memoryGrid"></div>
+        
+        <div class="feedback-msg" id="feedbackMsg"></div>
+        <button class="btn-gold" id="resetBtn" style="display:none;" onclick="inizializzaMemory()">Gioca ancora</button>
+    </div>
+
+    <script>
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('gameContainer').classList.add('active');
+            inizializzaMemory();
+        }
+
+        // I file delle tue facce anteriori create su Canva
+        const icone = [
+            'front_memory1.png',
+            'front_memory2.png',
+            'front_memory3.png',
+            'front_memory4.png',
+            'front_memory5.png',
+            'front_memory6.png'
+        ];
+
+        let carte = [];
+        let primaCarta = null;
+        let secondaCarta = null;
+        let bloccato = false;
+        let coppieTrovate = 0;
+
+        function inizializzaMemory() {
+            const grid = document.getElementById('memoryGrid');
+            grid.innerHTML = '';
+            document.getElementById('feedbackMsg').textContent = '';
+            document.getElementById('resetBtn').style.display = 'none';
+            coppieTrovate = 0;
+            primaCarta = null;
+            secondaCarta = null;
+            bloccato = false;
+
+            // Duplica le icone per fare le coppie (12 carte in totale) e le mescola
+            carte = [...icone, ...icone]
+                .sort(() => Math.random() - 0.5)
+                .map((fileImmagine, index) => ({ id: index, fileImmagine, girata: false, accoppiata: false }));
+
+            carte.forEach((carta, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'memory-card';
+                cardElement.dataset.index = index;
+                // Mostra il retro comune all'avvio
+                cardElement.innerHTML = `<img src="back_memory.png" alt="Retro">`;
+                cardElement.onclick = () => giraCarta(index, cardElement);
+                grid.appendChild(cardElement);
+            });
+        }
+
+        function giraCarta(index, element) {
+            if (bloccato) return;
+            const carta = carte[index];
+            if (carta.girata || carta.accoppiata) return;
+
+            carta.girata = true;
+            element.innerHTML = `<img src="${carta.fileImmagine}" alt="Icona">`;
+            element.classList.add('flipped');
+
+            if (!primaCarta) {
+                primaCarta = { index, element, fileImmagine: carta.fileImmagine };
+            } else {
+                secondaCarta = { index, element, fileImmagine: carta.fileImmagine };
+                controllaCoppia();
+            }
+        }
+
+        function controllaCoppia() {
+            const match = primaCarta.fileImmagine === secondaCarta.fileImmagine;
+
+            if (match) {
+                carte[primaCarta.index].accoppiata = true;
+                carte[secondaCarta.index].accoppiata = true;
+                coppieTrovate++;
+                resetScelta();
+
+                if (coppieTrovate === icone.length) {
+                    const feedback = document.getElementById('feedbackMsg');
+                    feedback.style.color = "#2ecc71";
+                    feedback.innerHTML = "🎉 <strong>Bravissima!</strong> Hai trovato tutte le coppie! 🌟<br><br><span style='color: var(--oro); font-size: 0.9rem;'>Torna domani per una nuova sorpresa!</span>";
+                    document.getElementById('resetBtn').style.display = 'inline-block';
+                }
+            } else {
+                bloccato = true;
+                setTimeout(() => {
+                    carte[primaCarta.index].girata = false;
+                    carte[secondaCarta.index].girata = false;
+                    // Riporta il retro (back_memory.png) quando si rigirano
+                    primaCarta.element.innerHTML = `<img src="back_memory.png" alt="Retro">`;
+                    secondaCarta.element.innerHTML = `<img src="back_memory.png" alt="Retro">`;
+                    primaCarta.element.classList.remove('flipped');
+                    secondaCarta.element.classList.remove('flipped');
+                    resetScelta();
+                }, 1000);
+            }
+        }
+
+        function resetScelta() {
+            primaCarta = null;
+            secondaCarta = null;
+            bloccato = false;
+        }
+    </script>
+</body>
+</html>

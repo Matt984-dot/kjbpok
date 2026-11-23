@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 7 - Trova le Differenze</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container.active {
+            background: #fff;
+            border: 3px solid var(--oro);
+            border-radius: 15px;
+            padding: 12px;
+            max-width: 680px;
+            width: 95%;
+            margin: 10px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .status-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bordeaux-scuro);
+            color: var(--oro);
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border: 1.5px solid var(--oro);
+        }
+
+        /* Contenitore immagine orizzontale */
+        .diff-board {
+            position: relative;
+            width: 100%;
+            margin: 0 auto 10px auto;
+            border: 2px solid var(--oro);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: crosshair;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .diff-board img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Cerchi di evidenziazione delle differenze */
+        .diff-marker {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 3.5px solid #2ecc71;
+            background: rgba(46, 204, 113, 0.22);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.8), inset 0 0 6px rgba(255,255,255,0.7);
+            pointer-events: none;
+            animation: circlePop 0.3s ease-out;
+        }
+
+        @keyframes circlePop {
+            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        /* Segnale errore temporaneo */
+        .miss-mark {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            color: #e74c3c;
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-shadow: 0 0 4px #fff, 0 0 4px #fff;
+            pointer-events: none;
+            animation: fadeMiss 0.6s forwards;
+        }
+
+        @keyframes fadeMiss {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -70%) scale(0.8); }
+        }
+
+        .hint-text {
+            font-size: 0.82rem;
+            color: #666;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO DI CANVA -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 7</div>
+        <img src="Pacco_chiuso7.png" alt="Pacco Giorno 7" class="gift-img" onclick="scartaRegalo()">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. MINIGIOCO TROVA LE DIFFERENZE -->
+    <div class="game-container" id="gameContainer">
+        <div class="status-bar">
+            <span>🔍 Differenze trovate: <span id="foundCount">0</span> / 5</span>
+        </div>
+
+        <p class="hint-text">Tocca i 5 dettagli diversi nell'immagine!</p>
+
+        <div class="diff-board" id="diffBoard" onclick="gestisciClick(event)">
+            <img src="sfondo7.png" alt="Trova le differenze" id="boardImg">
+        </div>
+
+        <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <script>
+        // Coordinate percentuali calibrate su sfondo7 (xDestra, xSinistra, y, raggio tolleranza)
+        const differenze = [
+            { id: 1, nome: "Quadro con il fiore", xR: 67.5, xL: 16.5, y: 31.8, raggio: 7.5, trovata: false },
+            { id: 2, nome: "Ghirlanda sul camino", xR: 75.5, xL: 24.5, y: 49.0, raggio: 8.5, trovata: false },
+            { id: 3, nome: "Soldatino Schiaccianoci", xR: 84.5, xL: 33.5, y: 36.5, raggio: 7.5, trovata: false },
+            { id: 4, nome: "Ultima calza a destra", xR: 90.0, xL: 39.0, y: 50.5, raggio: 6.5, trovata: false },
+            { id: 5, nome: "Ciabatte sul tappeto", xR: 93.5, xL: 44.5, y: 85.0, raggio: 7.5, trovata: false }
+        ];
+
+        let trovate = 0;
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('gameContainer').classList.add('active');
+        }
+
+        function gestisciClick(event) {
+            if (trovate >= differenze.length) return;
+
+            const board = document.getElementById('diffBoard');
+            const rect = board.getBoundingClientRect();
+
+            // Calcolo posizione del tocco in percentuale (0 - 100)
+            const clickX = ((event.clientX - rect.left) / rect.width) * 100;
+            const clickY = ((event.clientY - rect.top) / rect.height) * 100;
+
+            let colpita = false;
+
+            for (let diff of differenze) {
+                if (diff.trovata) continue;
+
+                // Controlla distanza sia sul lato destro che sul lato sinistro
+                const distR = Math.hypot(clickX - diff.xR, (clickY - diff.y) * 0.68);
+                const distL = Math.hypot(clickX - diff.xL, (clickY - diff.y) * 0.68);
+
+                if (distR <= diff.raggio || distL <= diff.raggio) {
+                    diff.trovata = true;
+                    colpita = true;
+                    trovate++;
+                    segnaDifferenza(diff);
+                    aggiornaStato(diff.nome);
+                    break;
+                }
+            }
+
+            if (!colpita) {
+                mostraErrore(clickX, clickY);
+            }
+        }
+
+        function segnaDifferenza(diff) {
+            const board = document.getElementById('diffBoard');
+            const diametro = diff.raggio * 1.8;
+
+            // Disegna il cerchio su entrambi i lati dell'immagine
+            [diff.xR, diff.xL].forEach(posX => {
+                const marker = document.createElement('div');
+                marker.className = 'diff-marker';
+                marker.style.left = `${posX}%`;
+                marker.style.top = `${diff.y}%`;
+                marker.style.width = `${diametro}%`;
+                marker.style.aspectRatio = '1 / 1';
+                board.appendChild(marker);
+            });
+        }
+
+        function mostraErrore(x, y) {
+            const board = document.getElementById('diffBoard');
+            const miss = document.createElement('div');
+            miss.className = 'miss-mark';
+            miss.textContent = '✖';
+            miss.style.left = `${x}%`;
+            miss.style.top = `${y}%`;
+            board.appendChild(miss);
+            setTimeout(() => miss.remove(), 600);
+        }
+
+        function aggiornaStato(nomeTrovato) {
+            document.getElementById('foundCount').textContent = trovate;
+            const feedback = document.getElementById('feedbackMsg');
+
+            if (trovate < differenze.length) {
+                feedback.style.color = "#2ecc71";
+                feedback.textContent = `✅ Trovata! (${nomeTrovato})`;
+            } else {
+                feedback.style.color = "#2ecc71";
+                feedback.innerHTML = "🎉 <strong>Occhio di falco!</strong> Hai trovato tutte e 5 le differenze! 🔍✨<br><br><span style='color: var(--oro); font-size: 0.9rem;'>Torna domani per decorare l'albero!</span>";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 1 - Calendario dell'Avvento</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL TUO PACCO DI CANVA -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 1</div>
+        <img src="Pacco_chiuso1.png" alt="Pacco Giorno 1" class="gift-img" onclick="scartaRegalo()">
+        <p class="tap-hint">Tocca il pacco per scartare la sorpresa! ✨</p>
+    </div>
+
+    <!-- 2. IL MINIGIOCO (Nascosto finché non si clicca il pacco) -->
+    <div class="game-container" id="gameContainer">
+        <h2 class="game-title">🎄 4 Immagini 1 Parola</h2>
+        
+        <!-- La tua immagine con le 4 foto di calore -->
+        <div style="margin-bottom: 15px; border-radius: 12px; overflow: hidden; border: 3px solid var(--oro); box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
+            <img src="calore.png" alt="4 Immagini Calore" style="width: 100%; display: block;">
+        </div>
+
+        <p style="margin-bottom: 12px; font-size: 0.95rem; opacity: 0.9;">Qual è la parola nascosta?</p>
+
+        <!-- Casella di testo semplice ed elegante -->
+        <input type="text" id="wordInput" class="input-gold" placeholder="SCRIVI QUI" maxlength="6">
+        
+        <br>
+        <button class="btn-gold" onclick="verificaParola()">Verifica</button>
+        
+        <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <script>
+        function scartaRegalo() {
+            // Nasconde il pacco e mostra il gioco con un'animazione fluida
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('gameContainer').classList.add('active');
+        }
+
+        function verificaParola() {
+            const input = document.getElementById('wordInput').value.trim().toUpperCase();
+            const feedback = document.getElementById('feedbackMsg');
+
+            if (input === "CALORE") {
+                feedback.style.color = "#2ecc71";
+                feedback.innerHTML = "🎉 <strong>Esatto!</strong> Il calore delle feste e degli abbracci che scaldano l'inverno ❤️<br><br><span style='color: var(--oro); font-size: 0.9rem;'>Torna domani per una nuova sorpresa!</span>";
+                document.getElementById('wordInput').disabled = true;
+            } else {
+                feedback.style.color = "#e74c3c";
+                feedback.textContent = "❌ Non è corretto, riprova!";
+            }
+        }
+    </script>
+</body>
+</html>

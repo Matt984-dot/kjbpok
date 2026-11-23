@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Giorno 4 - Wordle Natalizio</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container.active {
+            background: #fff;
+            border: 3px solid var(--oro);
+            border-radius: 15px;
+            padding: 12px;
+            max-width: 400px;
+            margin: 10px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        /* Contenitore immagine Canva */
+        .canva-board-container {
+            position: relative;
+            width: 100%;
+            max-width: 340px;
+            margin: 0 auto 12px auto;
+        }
+
+        .canva-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+        }
+
+        /* Griglia 5x7 sovrapposta con coordinate calibrate su scacchiera4.png */
+        .wordle-overlay-grid {
+            position: absolute;
+            top: 25.5%;
+            left: 4.1%;
+            width: 92.8%;
+            height: 65.1%;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+        }
+
+        .wordle-cell {
+            background: transparent;
+            color: var(--bordeaux-scuro);
+            font-size: 1.4rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            transition: background 0.3s, color 0.3s, transform 0.15s;
+        }
+
+        .wordle-cell.filled {
+            transform: scale(1.05);
+        }
+
+        /* Stati dopo la verifica della riga */
+        .wordle-cell.correct {
+            background: rgba(39, 174, 96, 0.88);
+            color: #ffffff;
+        }
+
+        .wordle-cell.present {
+            background: rgba(212, 175, 55, 0.90);
+            color: #ffffff;
+        }
+
+        .wordle-cell.absent {
+            background: rgba(93, 83, 78, 0.78);
+            color: #ffffff;
+        }
+
+        /* Tastiera su schermo */
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-width: 370px;
+            margin: 0 auto 10px auto;
+        }
+
+        .key-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .key-btn {
+            flex: 1;
+            max-width: 32px;
+            height: 40px;
+            background: var(--crema);
+            color: var(--bordeaux-scuro);
+            border: 1.5px solid var(--oro);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .key-btn:active {
+            transform: scale(0.92);
+        }
+
+        .key-btn.wide {
+            max-width: 54px;
+            font-size: 0.8rem;
+            background: var(--verde);
+            color: var(--crema);
+        }
+
+        .key-btn.del {
+            background: var(--bordeaux-scuro);
+            color: var(--crema);
+        }
+
+        /* Colori tasti già usati */
+        .key-btn.correct { background: #27ae60; color: #fff; border-color: #27ae60; }
+        .key-btn.present { background: #d4af37; color: #fff; border-color: #d4af37; }
+        .key-btn.absent  { background: #7f8c8d; color: #fff; border-color: #7f8c8d; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SCHERMATA INIZIALE CON IL PACCO DI CANVA -->
+    <div class="gift-screen" id="giftScreen">
+        <div class="day-badge">GIORNO 4</div>
+        <img src="Pacco_chiuso4.png" alt="Pacco Giorno 4" class="gift-img" onclick="scartaRegalo()">
+        <p class="tap-hint">Tocca il pacco per scoprire la sorpresa di oggi! ✨</p>
+    </div>
+
+    <!-- 2. IL MINIGIOCO WORDLE -->
+    <div class="game-container" id="gameContainer">
+        
+        <div class="canva-board-container">
+            <img src="scacchiera4.png" alt="Tabellone Wordle Natalizio" class="canva-img">
+            <div class="wordle-overlay-grid" id="wordleGrid"></div>
+        </div>
+
+        <div class="keyboard" id="keyboard"></div>
+        <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <script>
+        const PAROLA_SEGRETA = "FOSCHIA";
+        const RIGHE = 5;
+        const COLONNE = 7;
+
+        let rigaCorrente = 0;
+        let colonnaCorrente = 0;
+        let grigliaStato = Array.from({ length: RIGHE }, () => Array(COLONNE).fill(""));
+        let giocoFinito = false;
+
+        const layoutTastiera = [
+            ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+            ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+            ["INVIO", "Z", "X", "C", "V", "B", "N", "M", "⌫"]
+        ];
+
+        function scartaRegalo() {
+            document.getElementById('giftScreen').style.display = 'none';
+            document.getElementById('gameContainer').classList.add('active');
+            inizializzaWordle();
+        }
+
+        function inizializzaWordle() {
+            creaGriglia();
+            creaTastiera();
+        }
+
+        function creaGriglia() {
+            const grid = document.getElementById('wordleGrid');
+            grid.innerHTML = '';
+
+            for (let r = 0; r < RIGHE; r++) {
+                for (let c = 0; c < COLONNE; c++) {
+                    const cella = document.createElement('div');
+                    cella.className = 'wordle-cell';
+                    cella.id = `cell-${r}-${c}`;
+                    grid.appendChild(cella);
+                }
+            }
+        }
+
+        function creaTastiera() {
+            const kb = document.getElementById('keyboard');
+            kb.innerHTML = '';
+
+            layoutTastiera.forEach(riga => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'key-row';
+
+                riga.forEach(tasto => {
+                    const btn = document.createElement('button');
+                    btn.className = 'key-btn';
+                    btn.textContent = tasto;
+                    btn.id = `key-${tasto}`;
+
+                    if (tasto === "INVIO") btn.classList.add('wide');
+                    if (tasto === "⌫") btn.classList.add('wide', 'del');
+
+                    btn.onclick = () => gestisciInput(tasto);
+                    rowDiv.appendChild(btn);
+                });
+
+                kb.appendChild(rowDiv);
+            });
+        }
+
+        function gestisciInput(tasto) {
+            if (giocoFinito) return;
+
+            const feedback = document.getElementById('feedbackMsg');
+            feedback.textContent = "";
+
+            if (tasto === "⌫") {
+                if (colonnaCorrente > 0) {
+                    colonnaCorrente--;
+                    grigliaStato[rigaCorrente][colonnaCorrente] = "";
+                    const cella = document.getElementById(`cell-${rigaCorrente}-${colonnaCorrente}`);
+                    cella.textContent = "";
+                    cella.classList.remove('filled');
+                }
+                return;
+            }
+
+            if (tasto === "INVIO") {
+                if (colonnaCorrente < COLONNE) {
+                    feedback.style.color = "#e74c3c";
+                    feedback.textContent = "⚠️ Completa tutte e 7 le lettere!";
+                    return;
+                }
+                verificaTentativo();
+                return;
+            }
+
+            if (colonnaCorrente < COLONNE) {
+                grigliaStato[rigaCorrente][colonnaCorrente] = tasto;
+                const cella = document.getElementById(`cell-${rigaCorrente}-${colonnaCorrente}`);
+                cella.textContent = tasto;
+                cella.classList.add('filled');
+                colonnaCorrente++;
+            }
+        }
+
+        function verificaTentativo() {
+            const tentativo = grigliaStato[rigaCorrente].join("");
+            const lettereSegrete = PAROLA_SEGRETA.split("");
+            const risultato = Array(COLONNE).fill("absent");
+
+            // 1° passaggio: lettere esatte (verde)
+            for (let i = 0; i < COLONNE; i++) {
+                if (tentativo[i] === lettereSegrete[i]) {
+                    risultato[i] = "correct";
+                    lettereSegrete[i] = null;
+                }
+            }
+
+            // 2° passaggio: lettere presenti in altra posizione (oro)
+            for (let i = 0; i < COLONNE; i++) {
+                if (risultato[i] === "absent" && lettereSegrete.includes(tentativo[i])) {
+                    risultato[i] = "present";
+                    lettereSegrete[lettereSegrete.indexOf(tentativo[i])] = null;
+                }
+            }
+
+            // Applica i colori alle caselle e alla tastiera
+            for (let i = 0; i < COLONNE; i++) {
+                const cella = document.getElementById(`cell-${rigaCorrente}-${i}`);
+                cella.classList.add(risultato[i]);
+
+                const keyBtn = document.getElementById(`key-${tentativo[i]}`);
+                if (keyBtn) {
+                    if (risultato[i] === "correct") {
+                        keyBtn.classList.remove("present", "absent");
+                        keyBtn.classList.add("correct");
+                    } else if (risultato[i] === "present" && !keyBtn.classList.contains("correct")) {
+                        keyBtn.classList.remove("absent");
+                        keyBtn.classList.add("present");
+                    } else if (risultato[i] === "absent" && !keyBtn.classList.contains("correct") && !keyBtn.classList.contains("present")) {
+                        keyBtn.classList.add("absent");
+                    }
+                }
+            }
+
+            const feedback = document.getElementById('feedbackMsg');
+
+            if (tentativo === PAROLA_SEGRETA) {
+                giocoFinito = true;
+                feedback.style.color = "#2ecc71";
+                feedback.innerHTML = "🎉 <strong>Fantastico!</strong> Hai indovinato la parola <strong>FOSCHIA</strong>! 🌫️✨<br><br><span style='color: var(--oro); font-size: 0.9rem;'>Torna domani per una nuova sorpresa!</span>";
+                return;
+            }
+
+            rigaCorrente++;
+            colonnaCorrente = 0;
+
+            if (rigaCorrente === RIGHE) {
+                giocoFinito = true;
+                feedback.style.color = "#e74c3c";
+                feedback.innerHTML = `❄️ Tentativi esauriti! La parola segreta era <strong>${PAROLA_SEGRETA}</strong>.<br><br><span style='color: var(--oro); font-size: 0.9rem;'>Torna domani per la prossima casella!</span>`;
+            }
+        }
+
+        // Supporto anche per tastiera fisica (se provato da PC)
+        document.addEventListener("keydown", (e) => {
+            if (document.getElementById('gameContainer').classList.contains('active')) {
+                const key = e.key.toUpperCase();
+                if (key === "BACKSPACE") gestisciInput("⌫");
+                else if (key === "ENTER") gestisciInput("INVIO");
+                else if (/^[A-Z]$/.test(key)) gestisciInput(key);
+            }
+        });
+    </script>
+</body>
+</html>
